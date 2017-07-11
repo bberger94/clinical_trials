@@ -1,0 +1,15 @@
+
+*Update all directories to work universally on dropbox
+*Update header of do file(s) 
+*Update do file names to go chronologically 
+		** don't over-write raw data, rather save any modified data sets as a new file
+*Update variable labels (convention for this project: capitalize all words that are not prepositions or conjunctions) 
+		** e.g. "First Day of Clinical Trial" or "Supply and Demand Thing" 
+
+
+*Re-download Cortellis data, save in separate folder
+*Use Stata code for combining years on boht batches of Cortellis data, confirm same # of observations (per year)
+	** (e.g. tab year) --> will tabulate observations by year and we can confirm data sets look the same! 
+	
+
+* + Separately, update & tidy up Stata folder on dropbox with your favorite resources! (including YouTube videos/channels, etc!) 

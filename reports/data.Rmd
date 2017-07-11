@@ -1,0 +1,292 @@
+---
+title: Data Description
+author: Andrew Marder
+date: \today
+output: pdf_document
+urlcolor: blue
+---
+
+We currently have five tables of data from two data sources. We are pulling data from:
+
+1.  Cortellis: https://cortellis.thomsonreuterslifesciences.com/
+    1.  Trials: https://developercenter.thomsonreuters.com/docs/DOC-1649
+    2.  Companies
+    3.  Deals
+2.  PermID: https://permid.org/
+    4.  Organizations
+    5.  Quotes
+
+The Cortellis Companies and PermID tables will be used to merge financial data about firms to the clinical trials data. The Cortellis Deals table will be used to account for mergers and acquisitions between companies. I think the Cortellis Trials table is the table of most interest to you. The rest of this document gives a brief description of the data in this table.
+
+\clearpage
+
+At the moment, most of the data is stored in text or JSON fields:
+
+Column                             | Type
+---------------------------------- | -------
+ActionsPrimaryInterventionsPrimary | JSON
+AdverseEventsByInterventions       | JSON
+BiomarkerNames                     | JSON
+ChangeHistory                      | JSON
+Class                              | JSON
+CompaniesCollaborator              | JSON
+CompaniesSponsor                   | JSON
+Contacts                           | JSON
+CriteriaExclusion                  | Text
+CriteriaInclusion                  | Text
+CrossReferences                    | JSON
+DateAdded                          | Text
+DateChangeLast                     | Text
+DateEnd                            | JSON
+DateStart                          | Text
+DrugsAsInterventionPrimary         | JSON
+EligibilityCriteriaTerms           | JSON
+EndpointsAchieved                  | Text
+FundersType                        | JSON
+id                                 | Text
+Identifiers                        | JSON
+Indications                        | JSON
+InterventionsControlByRegimens     | JSON
+InterventionsPrimaryByRegimens     | JSON
+MeasuresOutcome                    | JSON
+NumberOfSites                      | Text
+OutcomeMeasureTerms                | JSON
+OutcomesAvailable                  | Text
+PatientCountEnrollment             | Integer
+PatientCountEvaluable              | Integer
+PatientSegmentTerms                | JSON
+Phase                              | Text
+PrimaryCompletionDate              | JSON
+ProtocolAndOutcomes                | JSON
+RecruitmentStatus                  | JSON
+SitesByCountries                   | JSON
+TermsDesign                        | JSON
+TermsEndpoint                      | JSON
+TermsPatientSelection              | JSON
+TitleDisplay                       | Text
+TitleOfficial                      | Text
+TrialCategories                    | JSON
+TrialRegistries                    | JSON
+
+\clearpage
+
+Here is an example response from the Cortallis API:
+
+```xml
+<Trial id="113240">  
+  <TitleDisplay>
+    A multicenter, open-label study to evaluate the tolerability and
+    effectiveness of replacing standard-formulation doxazosin with
+    doxazosin in the gastrointestinal therapeutic system formulation
+    in adult patients with hypertension
+  </TitleDisplay>  
+  <OutcomesAvailable>Yes</OutcomesAvailable>  
+  <EndpointsAchieved>Unspecified</EndpointsAchieved>  
+  <Identifiers />  
+  <Indications>  
+    <Indication id="3659">Arterial hypertension</Indication>  
+  </Indications>  
+  <BiomarkerNames>  
+    <BiomarkerName type="Therapeutic effect marker" id="2586">
+      Blood pressure
+    </BiomarkerName>  
+  </BiomarkerNames>  
+  <InterventionsPrimaryByRegimen regimenType="single">  
+    <Interventions>  
+      <Intervention type="InterventionPrimary">  
+        <Name>doxazosin</Name>  
+        <Drug id="6588">doxazosin</Drug>  
+      </Intervention>  
+    </Interventions>  
+  </InterventionsPrimaryByRegimen>  
+  <InterventionsPrimaryByRegimen regimenType="single">  
+    <Interventions>  
+      <Intervention type="InterventionPrimary">  
+        <Name>
+          doxazosin mesylate (extended release), ALZA/Pfizer
+        </Name>  
+        <Drug id="100100">
+          doxazosin mesylate (extended release), ALZA/Pfizer
+        </Drug>  
+      </Intervention>  
+    </Interventions>  
+  </InterventionsPrimaryByRegimen>  
+  <InterventionsControlByRegimens />  
+  <DrugsAsInterventionPrimary>  
+    <DrugAsInterventionPrimary>  
+      <Drug id="100100">
+        doxazosin mesylate (extended release), ALZA/Pfizer
+      </Drug>  
+      <IndicationsPioneer>  
+        <Indication id="3659">Arterial hypertension</Indication>
+      </IndicationsPioneer>  
+      <Companies>  
+        <Company>  
+          <Company id="1004104">Universidad Rey Juan Carlos</Company>
+          <RelationshipDirect>NONE</RelationshipDirect>  
+          <RelationshipInDirect>NONE</RelationshipInDirect>  
+        </Company>  
+      </Companies>  
+    </DrugAsInterventionPrimary>  
+    <DrugAsInterventionPrimary>  
+      <Drug id="6588">doxazosin</Drug>  
+      <IndicationsPioneer>  
+        <Indication id="3659">Arterial hypertension</Indication>  
+      </IndicationsPioneer>  
+      <Companies>  
+        <Company>  
+          <Company id="1004104">Universidad Rey Juan Carlos</Company>
+          <RelationshipDirect>NONE</RelationshipDirect>  
+          <RelationshipInDirect>NONE</RelationshipInDirect>  
+        </Company>  
+      </Companies>  
+    </DrugAsInterventionPrimary>  
+  </DrugsAsInterventionPrimary>  
+  <CrossReferences>  
+    <SourceEntity id="6588" type="Drug">  
+      <TargetEntity id="90854" type="siDrug">
+        Doxazosin mesylate
+      </TargetEntity>  
+    </SourceEntity>  
+    <SourceEntity id="1004104" type="Company">  
+      <TargetEntity id="5000700669" type="organizationId">
+        Universidad Rey Juan Carlos
+      </TargetEntity>  
+    </SourceEntity>  
+    <SourceEntity id="32" type="Action">  
+      <TargetEntity id="36" type="Mechanism">
+        alpha1-Adrenoceptor Antagonists
+      </TargetEntity>  
+    </SourceEntity>  
+  </CrossReferences>  
+  <Phase>Phase 1/Phase 2 Clinical</Phase>  
+  <RecruitmentStatus id="12">Status not specified</RecruitmentStatus>
+  <NumberOfSites>0</NumberOfSites>  
+  <CompaniesSponsor>  
+    <Company id="1004104">Universidad Rey Juan Carlos</Company>  
+  </CompaniesSponsor>  
+  <CompaniesCollaborator />  
+  <ActionsPrimaryInterventionsPrimary>  
+    <Action id="32">Alpha 1 adrenoceptor antagonist</Action>  
+  </ActionsPrimaryInterventionsPrimary>  
+  <Class>  
+    <Class id="2657">Antihypertensive</Class>  
+  </Class>  
+  <TrialCategories>  
+    <Category>Drug</Category>  
+    <Category>Small molecule</Category>  
+  </TrialCategories>  
+  <TermsDesign>  
+    <Term>Open Label</Term>  
+    <Term>Treatment</Term>  
+    <Term>Interventional</Term>  
+  </TermsDesign>  
+  <TermsEndpoint>  
+    <Term>Efficacy</Term>  
+    <Term>Safety</Term>  
+  </TermsEndpoint>  
+  <PatientCountEnrollment>4512</PatientCountEnrollment>  
+  <PatientCountEvaluable>4512</PatientCountEvaluable>  
+  <DateStart>2002-05-30T19:00:00-05:00</DateStart>  
+  <DateChangeLast>2016-09-09T11:00:05-05:00</DateChangeLast>  
+  <DateAdded>2013-03-01T05:11:24-06:00</DateAdded>  
+  <Contacts />  
+  <CriteriaInclusion>  
+    <Inclusion>  
+      <ul>  
+        <li>
+          Adult patients with uncontrolled arterial hypertension
+        </li>
+      </ul>  
+    </Inclusion>  
+  </CriteriaInclusion>  
+  <MeasuresOutcome>  
+    <MeasuresPrimary />  
+    <MeasureSecondary>  
+      <Measure>  
+        <Description>Safety</Description>  
+      </Measure>  
+      <Measure>  
+        <Description>Efficacy</Description>  
+      </Measure>  
+    </MeasureSecondary>  
+  </MeasuresOutcome>  
+  <ProtocolAndOutcomes>  
+    <AimsAndScope>  
+      <AimAndScope>  
+        <para>
+          The purpose of this multicenter, open-label study was to
+          evaluate the tolerability and effectiveness of replacing
+          standard-formulation <ulink linkType="Drug"
+          linkID="6588">doxazosin</ulink> with doxazosin in the
+          gastrointestinal therapeutic system formulation (<ulink
+          linkType="Drug" linkID="100100">doxazosin GITS</ulink>) in
+          adult patients with hypertension [<ulink
+          linkType="Reference" linkID="1372217">1372217</ulink>].
+        </para>  
+      </AimAndScope>  
+    </AimsAndScope>  
+    <Outcomes>  
+      <Outcomes>  
+        <para>
+          In May 2002, results showed that <ulink linkType="Drug"
+          linkID="6588">doxazosin</ulink>was effective in lowering
+          blood pressure and was well tolerated in patients with
+          hypertension [ <ulink linkType="Reference"
+          linkID="1372217">1372217</ulink>].
+        </para>  
+      </Outcomes>  
+    </Outcomes>  
+    <Regimens>  
+      <Regimens>  
+        <para>
+          Patients received <ulink linkType="Drug"
+          linkID="6588">doxazosin</ulink>, 1 , 2 , 4, 16 mg/day for 6
+          (maximum) months followed by <ulink linkType="Drug"
+          linkID="100100">doxazosin GITS</ulink>, 4 mg/day (8 mg/d if
+          needed) for 12 weeks [ <ulink linkType="Reference"
+          linkID="1372217">1372217</ulink>].
+        </para>  
+      </Regimens>  
+    </Regimens>  
+  </ProtocolAndOutcomes>  
+  <AdverseEventsByInterventions />  
+  <SitesByCountries />  
+  <PatientSegmentTerms />  
+  <TrialRegistries />  
+  <OutcomeMeasureTerms />  
+  <FundersType>  
+    <Type>Academic</Type>  
+  </FundersType>  
+  <ChangeHistory>  
+    <Change type="added">  
+      <Date>2013-03-01T05:11:24-06:00</Date>  
+      <Reason id="301">Clinical trial added</Reason>  
+    </Change>  
+    <Change type="updated">  
+      <Date>2013-08-04T08:54:02-05:00</Date>  
+      <Reason id="305">Change history start date</Reason>  
+    </Change>  
+  </ChangeHistory>  
+</Trial>  
+```
+
+\clearpage
+
+```{r, echo=FALSE}
+library(DBI)
+
+# needed to install RMySQL via devtools to get it to connect to the
+# server. https://github.com/rstats-db/RMySQL/issues/33
+con <- dbConnect(
+    RMySQL::MySQL(),
+    dbname="as_cortellis",
+    username="amarder",
+    password="stuc3dAc",
+    host="rhrcssql01.hbs.edu",
+    port=3306,
+    ssl.key="/Users/amarder/Desktop/mysql-ssl/client-key.pem",
+    ssl.cert="/Users/amarder/Desktop/mysql-ssl/client-cert.pem",
+    ssl.ca="/Users/amarder/Desktop/mysql-ssl/ca-cert.pem"
+)
+```

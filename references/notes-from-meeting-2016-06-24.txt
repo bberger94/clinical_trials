@@ -1,0 +1,29 @@
+
+*change variable names to all lowercase (if it's easier, separate with "_") 
+	* use the "rename" command -- e.g. say: [rename Country country] --> put this in the do file that cleans/lables variables
+
+*Work with Melissa to create a variable that is equal to 1 if the traial was in the US (at all) -- let's call it "us_trial" 
+	* Need to create a separate text variable that includes all of the strings of country names in "Country"
+	* Figure out if "US" (or any other version of that -- e.g. "United States" or "USA" or "U.S.") are in there
+	* Create a variable that is a flag for whether the trial has any of these strings in it
+	* Merge that variable (us_trial) back onto the main data set and it should be binary:-) 
+	* Eyeball/spot check it against "Country" when you have the variable done! 
+	
+*Create indicators (dummies) for different Phase 2 flavors
+	* e.g. gen phase2 = Phase == " Phase 2 Clinical" ... etc!
+	* note: you can also use the command encode to create a numeric indicator from strings, but let's not use that here! 
+
+	
+*For down the road: 
+	* work with Melissa to create a whole bunch of dummy variables that apply to all of the crazy conditions listed:
+	* this will probably involve outsheetign the condition string data, parsing it (delimited by ";" which helps), coding individual conditions as dummies
+	* Separately, we will want to do the exact same exercise with all of the biomarkers
+	* These tasks will likely have a large "by hand" component to them, which will be a pain in the butt, but this is super important!
+	* Melissa will know how and where to automate as much of this as possible! 
+	
+*For PrimaryInterventions:
+	* more simply to start with: see if the word "alone" is in the string: if so, this is a single therapy trial...if not, it is a combination therapy trial
+	* generate a dummy called "combination_therapy" if the string "alone" is NOT in the primary intervention text. 
+	
+*Note: we may want to return to the recruitment stats and organization type variables later and use them...nothing to do now, just note this! 	
+*Later: deal with coding category variable 

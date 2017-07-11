@@ -1,0 +1,1536 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   14.2   Copyright 1985-2015 StataCorp LLC
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+18-user 8-core Stata network perpetual license:
+       Serial number:  501406201034
+         Licensed to:  National Bureau of Economic Research
+                       Cambridge, MA 02138
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+
+running /disk/admin/Linux-local/stata14/sysprofile.do ...
+
+. do 3.1_Summary_Statistics_P2_Data.do 
+
+. /****************************************************************************
+> *******
+> File        : 3.1_Summary_Statistics_P2_Data.do
+> Authors     : Ben Berger
+> Created     : 13 Mar 2017
+> Description : creates summary statistics tables and figures
+>               from P2 clinical trial starts from 1995 - 2015
+>               writes tables to .tex; writes graphics to .eps
+> *****************************************************************************
+> ******/
+. 
+. set more off 
+
+. do setup.do
+
+. global raw = "../data/raw"
+
+. global interim = "../data/interim"
+
+. global processed = "../data/processed"
+
+. 
+end of do-file
+
+. 
+. use "$processed/clinical-trials.dta", clear
+
+. 
+. 
+. *label variables 
+. cap label drop biomarker_label
+
+.         label define biomarker_label 0 "No biomarker" 1 "Biomarker"
+
+.         label values biomarker_included biomarker_label
+
+. 
+. cap label drop nih_label
+
+.         label define nih_label 0 "No funding" 1 "NIH funding"
+
+.         label values nih_yes nih_label
+
+. 
+. *labeling at least one of years will force esttab to produce year labels with
+> out preceding variable names
+. *ie otherwise tables will appear "Start Year = 1995" "Start Year = 1996" ...
+. cap label drop year_labels
+
+.         label define year_labels 1995 1995
+
+.         label values start_year year_labels
+
+. 
+. 
+. *define helper function to export figures: same as from figures.do
+. cap program drop my_export
+
+. program define my_export
+  1.   // graph export to eps, then use convert to create png
+.   // http://teaching.sociology.ul.ie/bhalpin/wordpress/?p=135
+.   syntax anything
+  2. 
+.   graph export "../reports/figures/`anything'", replace
+  3. end
+
+. 
+. 
+. *****define functions for making tables & figures
+. 
+. *all-time xtab of funding count by biomarker presence
+. cap program drop nih_bmkr_count
+
+. program define nih_bmkr_count
+  1.         syntax, /// 
+>         
+  2.         preserve
+  3.         
+.         estpost tabulate biomarker_included nih_yes 
+  4. 
+.         esttab . using "../reports/tables/finished/nih-bmkr-count.tex", ///
+>                 replace ///
+>                 title("Number of Phase II trials receiving NIH funding by pre
+> sence of biomarker") ///
+>                 b(%8.0gc) ///
+>                 compress ///
+>                 unstack ///
+>                 noobs ///
+>                 nonotes ///
+>                 nonumbers ///
+>                 label ///
+>         
+  5.         restore
+  6. 
+. end
+
+. 
+. 
+. *all-time xtab of funding probability by biomarker presence
+. cap program drop nih_bmkr_pct
+
+. program define nih_bmkr_pct
+  1.         
+.         label variable nih_yes "Number of trials receiving funding"
+  2.         
+.         total nih_yes, over(biomarker_included)
+  3.         est sto A
+  4.         
+.         total nih_yes if us_trial == 1, over(biomarker_included)
+  5.         est sto B
+  6.         
+.         total nih_yes if us_trial == 0, over(biomarker_included)
+  7.         est sto C
+  8.         
+.         esttab A B C using  "../reports/tables/interim/nih-bmkr-pct_appended.
+> tex", ///
+>                 replace ///
+>                 title("Number of Phase II trials receiving NIH funding by pre
+> sence of biomarker") ///
+>                 label mtitle("All Trials" "US Trials" "Non-US Trials") ///
+>                 cells(b se(fmt(a1) par)) ///
+>                 collabels(none) ///
+>                 rename(_subpop_1 "No biomarker") ///
+>                 noobs ///
+>                 fragment ///
+> 
+  9.         cap drop nih_times100
+ 10.         gen nih_times100 = nih_yes * 100
+ 11.         label variable nih_times100 "Percent of trials receiving funding"
+ 12. 
+.         mean nih_times100, over(biomarker_included)
+ 13.         est sto A
+ 14.         
+.         mean nih_times100 if us_trial == 1, over(biomarker_included)
+ 15.         est sto B
+ 16.         
+.         mean nih_times100 if us_trial == 0, over(biomarker_included)
+ 17.         est sto C
+ 18.         
+.         esttab A B C using  "../reports/tables/interim/nih-bmkr-pct_appended.
+> tex", ///
+>                 append ///
+>                 label ///
+>                 mtitle("" "" "") ///
+>                 cells(b(fmt(1)) se(fmt(2) par)) ///
+>                 scalars(N) ///
+>                 sfmt(%8.0gc) ///
+>                 collabels(none) ///
+>                 rename(_subpop_1 "No biomarker") ///
+>                 nonum ///
+>                 fragment ///
+> 
+ 19. end
+
+. 
+. 
+. *all-time xtab of funding probability by biomarker type
+. cap program drop nih_bmkrtype
+
+. program define nih_bmkrtype
+  1.         
+.         eststo clear
+  2.         
+.         cap drop nih_times100
+  3.         gen nih_times100 = nih_yes * 100
+  4.         label variable nih_times100 "Percent of trials receiving funding"
+  5. 
+.         quietly mean nih_times100 if genomic_biomarker_type == 1
+  6.         estimates store Genomic
+  7.         
+.         quietly mean nih_times100 if proteomic_biomarker_type == 1
+  8.         estimates store Proteomic
+  9.         
+.         quietly mean nih_times100 if biochemical_biomarker_type == 1
+ 10.         estimates store Biochemical
+ 11.         
+.         quietly mean nih_times100 if cellular_biomarker_type == 1
+ 12.         estimates store Cellular
+ 13.         
+.         quietly mean nih_times100 if physiological_biomarker_type == 1
+ 14.         estimates store Physiological
+ 15.         
+.         quietly mean nih_times100 if structural_biomarker_type == 1
+ 16.         estimates store Structural
+ 17. 
+.         quietly mean nih_times100 if anthropomorphic_biomarker_type == 1
+ 18.         estimates store Anthropomorphic
+ 19. 
+.         esttab Genomic Proteomic Biochemical Cellular Physiological Structura
+> l Anthropomorphic ///
+>                 using "../reports/tables/finished/nih-bmkrtype.tex", ///
+>                 replace ///
+>                 nostar ///
+>                 se ///
+>                 mtitles ///
+>                 b(1) ///
+>                 label ///
+>                 title("Percent of Phase II trials receiving NIH funding by bi
+> omarker type") ///
+> 
+ 20. end
+
+. 
+. 
+. *all-time xtab of funding probability by biomarker role
+. cap program drop nih_bmkrrole
+
+. program define nih_bmkrrole
+  1.         
+.         eststo clear
+  2.         
+.         cap drop nih_times100
+  3.         gen nih_times100 = nih_yes * 100
+  4.         label variable nih_times100 "Percent receiving funding"
+  5.         
+.         quietly mean nih_times100 if disease_biomarke_role == 1
+  6.         estimates store disease
+  7. 
+.         quietly mean nih_times100 if therapeutic_effect_biomarke_role == 1
+  8.         estimates store therapeutic_effect
+  9.         
+.         quietly mean nih_times100 if toxic_effect_biomarke_role == 1
+ 10.         estimates store toxic_effect
+ 11.                 
+.         quietly mean nih_times100 if not_determined_biomarke_role == 1
+ 12.         estimates store not_determined
+ 13.         
+.         
+.         esttab disease therapeutic_effect toxic_effect not_determined ///
+>                 using "../reports/tables/finished/nih-bmkrrole.tex", ///
+>                 replace ///
+>                 nostar ///
+>                 se ///
+>                 mtitle("Disease" "Therapeutic effect" "Toxic effect" "Not det
+> ermined") ///
+>                 b(1) ///
+>                 label ///
+>                 title("Percent of Phase II trials receiving NIH funding by bi
+> omarker role") ///
+> 
+ 14. end
+
+. 
+. 
+. *make yearly xtab of funding probability by biomarker presence; plot and tabu
+> late
+. cap program drop nih_bmkr_yr
+
+. program define nih_bmkr_yr
+  1.         syntax, ///
+>         trial_set(string)
+  2.         
+.         eststo clear
+  3.         preserve
+  4.         
+.         assert "`trial_set'" == "us" | "`trial_set'" == "all"
+  5.                 
+.         if  "`trial_set'" == "all"{
+  6.         local samplestring "All trials"
+  7.         }
+  8.         
+.         if "`trial_set'" == "us"{
+  9.         keep if us_trial == 1
+ 10.         local samplestring "US trials"
+ 11.         }       
+ 12.         
+.         *scale response variable to percentage scale
+.         cap drop nih_times100
+ 13.         gen nih_times100 = nih_yes * 100 
+ 14.         
+.         *make plot
+.         reg nih_times100 i.start_year##i.biomarker_included 
+ 15.         margins, over(start_year biomarker_included) post
+ 16.         
+.         /* 
+>         *use this marginsplot command if we want confidence intervals
+>         marginsplot, ///
+>                 title("Percent of Phase II trials receiving NIH funding: `sam
+> plestring'") ///
+>                 xlabel(1995(5)2015) ///
+>                 ylabel(0(5)25) ///
+>                 xtitle("Trial Start Year") ///
+>                 ytitle("Percent of trials funded by the NIH") ///
+>                 yscale(r(-7 25)) ///
+>         */
+.         
+.         marginsplot, ///
+>                 title("Percent of Phase II trials receiving NIH funding: `sam
+> plestring'") ///
+>                 xlabel(1995(5)2015) ///
+>                 ylabel(0(5)20) ///
+>                 xtitle("Trial Start Year") ///
+>                 ytitle("Percent of trials funded by the NIH") ///
+>                 yscale(r(0 20)) ///
+>                 noci ///
+>         
+ 17.         my_export nih-bmkr-yr-`trial_set'.eps
+ 18. 
+.         *make table     
+.         gen biomarker_excluded = 1 - biomarker_included
+ 19.         reg nih_times100 i.start_year##i.biomarker_included
+ 20.         margins, over(start_year) subpop(biomarker_excluded) post
+ 21.         eststo No_biomarker
+ 22.         
+.         reg nih_times100 i.start_year##i.biomarker_included 
+ 23.         margins, over(start_year) subpop(biomarker_included) post
+ 24.         eststo Biomarker
+ 25. 
+. 
+.         esttab using "../reports/tables/finished/nih-bmkr-yr-`trial_set'.tex"
+> , ///
+>                         replace ///
+>                         title("Percent of Phase II trials receiving NIH fundi
+> ng by presence of biomarker: `samplestring'") ///
+>                         mtitle("No biomarker" "Biomarker") ///
+>                         not ///
+>                         nostar ///
+>                         b(1) ///
+>                         nogaps ///
+>                         noobs ///
+>                         label ///
+>         
+ 26.         restore
+ 27. 
+. end
+
+. 
+. 
+. *table of trial count by phase 
+. cap program drop trial_phase
+
+. program define trial_phase
+  1.         
+.         estpost tabulate phase
+  2. 
+.         esttab . using "../reports/tables/finished/trial-phase.tex",         
+>                                    ///
+>                 replace                                         ///
+>                 cells("b(fmt(%8.0gc)) pct(fmt(1))")                          
+>    ///
+>                 title("Trials by Phase")                        ///
+>                 collabels("Trial count" "Percent of all Phase II") ///
+>                 nomtitle                                        ///
+>                 compress                                        ///
+>                 noobs                                           ///
+>                 nonum                                           ///
+>                 
+  3. end
+
+. 
+. 
+. *table of variable means over nih funding status
+. cap program drop nih_means
+
+. program define nih_means
+  1.         
+.         eststo clear
+  2.         
+.         quietly mean trial_duration_in_months, over(nih_yes)
+  3.         est sto duration
+  4.         
+.         quietly mean us_trial, over(nih_yes)
+  5.         est sto us
+  6.         
+.         quietly mean enrollment_count, over(nih_yes)
+  7.         est sto enroll
+  8.         
+.         esttab duration us enroll, ///
+>                 cells("b _N")  ///
+>         
+  9.         /*transpose the table according to notes here: 
+>         http://fmwww.bc.edu/repec/bocode/e/estout/advanced.html */
+.         matrix C = r(coefs)
+ 10.         
+.         eststo clear
+ 11.         local rnames : rownames C
+ 12.         local models : coleq C
+ 13.         local models : list uniq models
+ 14.         
+.         local i 0
+ 15.         
+.         foreach name of local rnames {
+ 16.         local ++i
+ 17.         local j 0
+ 18.         capture matrix drop b
+ 19.         capture matrix drop N
+ 20.         foreach model of local models {
+ 21.            local ++j
+ 22.            matrix tmp = C[`i', 2*`j'-1]
+ 23.            if tmp[1,1]<. {
+ 24.               matrix colnames tmp = `model'
+ 25.               matrix b = nullmat(b), tmp
+ 26.               matrix tmp[1,1] = C[`i', 2*`j']
+ 27.               matrix N = nullmat(N), tmp
+ 28.           }
+ 29.         }
+ 30.         ereturn post b
+ 31.         quietly estadd matrix N
+ 32.         eststo `name'
+ 33.         }
+ 34. 
+.         esttab using "../reports/tables/finished/nih-means.tex",  ///
+>                 replace ///
+>                 cells("b(fmt(a2)) N(fmt(%8.0gc))") ///
+>                 title("Selected statistics by NIH funding status") ///
+>                 mtitles("No NIH funding" "NIH funding") ///
+>                 varlabels(duration "Duration" us "US Trial" enroll "Subjects 
+> enrolled") ///
+>                 collabels("Mean" "\# of nonmissing observations") ///
+>                 noobs nonum
+ 35.         
+. end
+
+. 
+. 
+. *table of average trial duration over years
+. cap program drop trial_duration
+
+. program define trial_duration
+  1.                 
+.         *make plot
+.         reg trial_duration i.start_year
+  2.         margins, over(start_year) post
+  3.         marginsplot, ///
+>                 title("Average trial duration in months") ///
+>                 xlabel(1995(5)2015) ///
+>                 ylabel(0(10)100) ///
+>                 xtitle("Trial start year") ///
+>                 ytitle("Trial duration in months") ///
+>         
+  4.         my_export trial-duration.eps
+  5. 
+.         esttab . using "../reports/tables/finished/trial-duration.tex", ///
+>                 replace ///
+>                 cells("b(fmt(1)) _N(fmt(%8.0gc))") ///
+>                 title("Average trial duration in months") ///
+>                 not nostar nonum ///
+>                 label ///
+>                 collabels("Duration" "\# of trials with nonmissing duration",
+>  lhs("Year"))
+  6.                                 
+. end
+
+. 
+. 
+. cap program drop main
+
+. program define main 
+  1. 
+.         nih_bmkr_count
+  2.         nih_bmkr_pct
+  3.         nih_bmkrrole
+  4.         nih_bmkrtype
+  5.         nih_means
+  6.         trial_phase
+  7.         trial_duration
+  8.         nih_bmkr_yr, trial_set(all)
+  9.         nih_bmkr_yr, trial_set(us)
+ 10. 
+. end
+
+. 
+. 
+. ****call functions
+. main
+
+nih_yes      |                                            
+biomarker_in |      e(b)     e(pct)  e(colpct)  e(rowpct) 
+-------------+--------------------------------------------
+No funding   |                                            
+No_biomarker |     25511   59.89763   62.23561    96.9042 
+   Biomarker |     15480   36.34571   37.76439   95.17369 
+       Total |     40991   96.24334        100   96.24334 
+-------------+--------------------------------------------
+NIH funding  |                                            
+No_biomarker |       815    1.91355    50.9375   3.095799 
+   Biomarker |       785   1.843112    49.0625   4.826314 
+       Total |      1600   3.756662        100   3.756662 
+-------------+--------------------------------------------
+Total        |                                            
+No_biomarker |     26326   61.81118   61.81118        100 
+   Biomarker |     16265   38.18882   38.18882        100 
+       Total |     42591        100        100        100 
+(output written to ../reports/tables/finished/nih-bmkr-count.tex)
+
+Total estimation                  Number of obs   =     42,591
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |      Total   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_yes      |
+   _subpop_1 |        815   28.10337      759.9168    870.0832
+   Biomarker |        785   27.33422      731.4244    838.5756
+--------------------------------------------------------------
+
+Total estimation                  Number of obs   =     17,590
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |      Total   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_yes      |
+   _subpop_1 |        769   26.63903      716.7849    821.2151
+   Biomarker |        739   25.83806      688.3548    789.6452
+--------------------------------------------------------------
+
+Total estimation                  Number of obs   =     25,001
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |      Total   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_yes      |
+   _subpop_1 |         46   6.773004      32.72451    59.27549
+   Biomarker |         46   6.764612      32.74096    59.25904
+--------------------------------------------------------------
+(output written to ../reports/tables/interim/nih-bmkr-pct_appended.tex)
+
+Mean estimation                   Number of obs   =     42,591
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_times100 |
+   _subpop_1 |   3.095799   .1067514      2.886564    3.305034
+   Biomarker |   4.826314   .1680554      4.496922    5.155706
+--------------------------------------------------------------
+
+Mean estimation                   Number of obs   =     17,590
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_times100 |
+   _subpop_1 |   7.728643    .267729      7.203868    8.253418
+   Biomarker |   9.672775   .3381946       9.00988    10.33567
+--------------------------------------------------------------
+
+Mean estimation                   Number of obs   =     25,001
+
+    _subpop_1: biomarker_included = No biomarker
+    Biomarker: biomarker_included = Biomarker
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+nih_times100 |
+   _subpop_1 |   .2808989   .0413593      .1998321    .3619656
+   Biomarker |   .5333333   .0784303      .3796054    .6870613
+--------------------------------------------------------------
+(output written to ../reports/tables/interim/nih-bmkr-pct_appended.tex)
+(output written to ../reports/tables/finished/nih-bmkrrole.tex)
+(output written to ../reports/tables/finished/nih-bmkrtype.tex)
+
+-------------------------------------------------------------------------------
+> -----------
+                      (1)                       (2)                       (3)  
+>            
+                     Mean                      Mean                      Mean  
+>            
+                        b           _N            b           _N            b  
+>          _N
+-------------------------------------------------------------------------------
+> -----------
+main                                                                           
+>            
+_subpop_1        37.44205        28834       .39233        40991     105.8709  
+>       39184
+_subpop_2        58.43375         1268        .9425         1600     72.44563  
+>        1499
+-------------------------------------------------------------------------------
+> -----------
+N                   30102                     42591                     40683  
+>            
+-------------------------------------------------------------------------------
+> -----------
+(output written to ../reports/tables/finished/nih-means.tex)
+
+       phase |      e(b)     e(pct)  e(cumpct) 
+-------------+---------------------------------
+Phase_2_Cl~l |     39482   92.70034   92.70034 
+Phase_2a_C~l |      1768   4.151112   96.85145 
+Phase_2b_C~l |      1341   3.148553        100 
+-------------+---------------------------------
+       Total |     42591        100            
+(output written to ../reports/tables/finished/trial-phase.tex)
+
+      Source |       SS           df       MS      Number of obs   =    30,102
+-------------+----------------------------------   F(20, 30081)    =     94.74
+       Model |  2016096.29        20  100804.815   Prob > F        =    0.0000
+    Residual |  32006370.9    30,081  1064.00621   R-squared       =    0.0593
+-------------+----------------------------------   Adj R-squared   =    0.0586
+       Total |  34022467.2    30,101  1130.27697   Root MSE        =    32.619
+
+------------------------------------------------------------------------------
+trial_dura~s |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |    9.72971   4.509504     2.16   0.031     .8908891    18.56853
+       1997  |  -6.472222   4.027844    -1.61   0.108    -14.36697    1.422524
+       1998  |  -7.636337   3.852679    -1.98   0.047    -15.18775   -.0849205
+       1999  |   -10.1824   3.682879    -2.76   0.006      -17.401     -2.9638
+       2000  |  -10.17086   3.636517    -2.80   0.005    -17.29859   -3.043129
+       2001  |  -13.84516   3.572344    -3.88   0.000    -20.84711   -6.843216
+       2002  |  -19.89789   3.511728    -5.67   0.000    -26.78102   -13.01475
+       2003  |  -20.80964   3.473074    -5.99   0.000    -27.61702   -14.00227
+       2004  |  -24.23258   3.441662    -7.04   0.000    -30.97839   -17.48678
+       2005  |  -28.88175   3.418464    -8.45   0.000    -35.58208   -22.18141
+       2006  |  -28.85662   3.409527    -8.46   0.000    -35.53944    -22.1738
+       2007  |  -31.91168   3.400873    -9.38   0.000    -38.57754   -25.24582
+       2008  |  -33.85302    3.39875    -9.96   0.000    -40.51472   -27.19132
+       2009  |   -32.3178   3.394726    -9.52   0.000    -38.97161   -25.66399
+       2010  |  -34.63396   3.397618   -10.19   0.000    -41.29344   -27.97448
+       2011  |  -35.23402   3.396893   -10.37   0.000    -41.89207   -28.57596
+       2012  |  -36.91412   3.396437   -10.87   0.000    -43.57128   -30.25695
+       2013  |   -37.0593   3.396465   -10.91   0.000    -43.71652   -30.40208
+       2014  |  -39.49151   3.401392   -11.61   0.000    -46.15838   -32.82464
+       2015  |  -38.88722   3.396692   -11.45   0.000    -45.54488   -32.22955
+             |
+       _cons |   69.58333   3.329174    20.90   0.000     63.05801    76.10866
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     30,102
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1995  |   69.58333   3.329174    20.90   0.000     63.05801    76.10866
+       1996  |   79.31304   3.041748    26.07   0.000     73.35109      85.275
+       1997  |   63.11111   2.267185    27.84   0.000     58.66733    67.55489
+       1998  |     61.947   1.939005    31.95   0.000     58.14646    65.74753
+       1999  |   59.40093   1.574865    37.72   0.000     56.31413    62.48774
+       2000  |   59.41247   1.463167    40.61   0.000      56.5446    62.28034
+       2001  |   55.73817    1.29547    43.03   0.000     53.19899    58.27735
+       2002  |   49.68545   1.117512    44.46   0.000     47.49507    51.87582
+       2003  |   48.77369   .9893667    49.30   0.000     46.83449    50.71289
+       2004  |   45.35075   .8727179    51.96   0.000     43.64019    47.06132
+       2005  |   40.70159   .7762055    52.44   0.000     39.18019    42.22298
+       2006  |   40.72672   .7358526    55.35   0.000     39.28442    42.16902
+       2007  |   37.67166   .6946528    54.23   0.000     36.31011     39.0332
+       2008  |   35.73031   .6841831    52.22   0.000     34.38928    37.07134
+       2009  |   37.26553   .6639012    56.13   0.000     35.96426    38.56681
+       2010  |   34.94937   .6785348    51.51   0.000     33.61942    36.27933
+       2011  |   34.34932   .6748941    50.90   0.000     33.02649    35.67214
+       2012  |   32.66922   .6725947    48.57   0.000      31.3509    33.98753
+       2013  |   32.52403   .6727377    48.35   0.000     31.20544    33.84263
+       2014  |   30.09182   .6971869    43.16   0.000     28.72531    31.45834
+       2015  |   30.69612   .6738852    45.55   0.000     29.37527    32.01696
+------------------------------------------------------------------------------
+
+  Variables that uniquely identify margins: start_year
+(file ../reports/figures/trial-duration.eps written in EPS format)
+(output written to ../reports/tables/finished/trial-duration.tex)
+
+      Source |       SS           df       MS      Number of obs   =    42,591
+-------------+----------------------------------   F(41, 42549)    =     11.16
+       Model |  163874.541        41  3996.94002   Prob > F        =    0.0000
+    Residual |  15235059.5    42,549  358.059167   R-squared       =    0.0106
+-------------+----------------------------------   Adj R-squared   =    0.0097
+       Total |    15398934    42,590  361.562199   Root MSE        =    18.922
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -1.848371   1.579149    -1.17   0.242    -4.943535    1.246793
+       1997  |   1.330934   1.481408     0.90   0.369    -1.572654    4.234522
+       1998  |  -.7053031   1.407061    -0.50   0.616     -3.46317    2.052564
+       1999  |   .1127329   1.346446     0.08   0.933    -2.526329    2.751794
+       2000  |  -.4734759   1.340538    -0.35   0.724    -3.100958    2.154006
+       2001  |  -1.459482    1.32058    -1.11   0.269    -4.047844     1.12888
+       2002  |  -1.964633   1.291655    -1.52   0.128    -4.496302    .5670367
+       2003  |  -2.543963   1.281407    -1.99   0.047    -5.055546   -.0323803
+       2004  |  -1.097005   1.261215    -0.87   0.384    -3.569011    1.375001
+       2005  |  -1.785916   1.240068    -1.44   0.150    -4.216472    .6446414
+       2006  |  -3.060139   1.237621    -2.47   0.013    -5.485901   -.6343768
+       2007  |  -3.535699    1.23735    -2.86   0.004    -5.960929   -1.110468
+       2008  |  -3.135456   1.238367    -2.53   0.011     -5.56268   -.7082328
+       2009  |  -3.486797   1.240442    -2.81   0.005    -5.918087   -1.055506
+       2010  |  -4.752259   1.249558    -3.80   0.000    -7.201419     -2.3031
+       2011  |   -4.81958   1.249043    -3.86   0.000     -7.26773   -2.371431
+       2012  |  -4.902553   1.251952    -3.92   0.000    -7.356404   -2.448702
+       2013  |  -3.870265   1.259394    -3.07   0.002    -6.338702   -1.401828
+       2014  |  -4.206861   1.275766    -3.30   0.001    -6.707389   -1.706334
+       2015  |  -3.389555   1.273806    -2.66   0.008    -5.886239   -.8928709
+             |
+biomarker_~d |
+  Biomarker  |  -2.566762   3.700399    -0.69   0.488    -9.819617    4.686094
+             |
+  start_year#|
+biomarker_~d |
+       1996 #|
+  Biomarker  |   6.092403   4.901182     1.24   0.214    -3.514011    15.69882
+       1997 #|
+  Biomarker  |    5.22079   4.658607     1.12   0.262    -3.910172    14.35175
+       1998 #|
+  Biomarker  |   6.347936   4.289002     1.48   0.139    -2.058593    14.75447
+       1999 #|
+  Biomarker  |   11.56504   4.143511     2.79   0.005     3.443678    19.68641
+       2000 #|
+  Biomarker  |   6.013964   4.019388     1.50   0.135    -1.864116    13.89204
+       2001 #|
+  Biomarker  |   8.870935   3.963707     2.24   0.025      1.10199    16.63988
+       2002 #|
+  Biomarker  |   7.368816   3.897333     1.89   0.059     -.270034    15.00767
+       2003 #|
+  Biomarker  |   5.362006   3.863127     1.39   0.165      -2.2098    12.93381
+       2004 #|
+  Biomarker  |   4.870951   3.821074     1.27   0.202    -2.618429    12.36033
+       2005 #|
+  Biomarker  |    5.70141    3.79631     1.50   0.133    -1.739432    13.14225
+       2006 #|
+  Biomarker  |   7.995096   3.782511     2.11   0.035     .5813007    15.40889
+       2007 #|
+  Biomarker  |   6.814331   3.773248     1.81   0.071    -.5813099    14.20997
+       2008 #|
+  Biomarker  |   4.583602    3.77062     1.22   0.224    -2.806887    11.97409
+       2009 #|
+  Biomarker  |   4.693416   3.764695     1.25   0.213    -2.685461    12.07229
+       2010 #|
+  Biomarker  |   5.361955   3.764004     1.42   0.154    -2.015568    12.73948
+       2011 #|
+  Biomarker  |   4.826589   3.761591     1.28   0.199    -2.546203    12.19938
+       2012 #|
+  Biomarker  |   4.343029   3.759565     1.16   0.248    -3.025791    11.71185
+       2013 #|
+  Biomarker  |   4.229096   3.762996     1.12   0.261    -3.146449    11.60464
+       2014 #|
+  Biomarker  |   3.686657   3.768603     0.98   0.328    -3.699879    11.07319
+       2015 #|
+  Biomarker  |   3.319295   3.763169     0.88   0.378    -4.056589    10.69518
+             |
+       _cons |   6.015038    1.16021     5.18   0.000     3.741003    8.289072
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     42,591
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year biomarker_included
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year#|
+biomarker_~d |
+       1995 #|
+No biomar..  |   6.015038    1.16021     5.18   0.000     3.741003    8.289072
+       1995 #|
+  Biomarker  |   3.448276   3.513811     0.98   0.326    -3.438863    10.33541
+       1996 #|
+No biomar..  |   4.166667   1.071273     3.89   0.000     2.066951    6.266383
+       1996 #|
+  Biomarker  |   7.692308   3.030017     2.54   0.011     1.753414     13.6312
+       1997 #|
+No biomar..  |   7.345972   .9211305     7.97   0.000     5.540538    9.151406
+       1997 #|
+  Biomarker  |         10   2.676039     3.74   0.000     4.754911    15.24509
+       1998 #|
+No biomar..  |   5.309735   .7960735     6.67   0.000     3.749415    6.870054
+       1998 #|
+  Biomarker  |   9.090909    2.01714     4.51   0.000     5.137275    13.04454
+       1999 #|
+No biomar..  |   6.127771   .6832501     8.97   0.000     4.788587    7.466954
+       1999 #|
+  Biomarker  |   15.12605   1.734618     8.72   0.000     11.72616    18.52594
+       2000 #|
+No biomar..  |   5.541562   .6715327     8.25   0.000     4.225344    6.857779
+       2000 #|
+  Biomarker  |   8.988764   1.418298     6.34   0.000     6.208873    11.76866
+       2001 #|
+No biomar..  |   4.555556   .6307484     7.22   0.000     3.319276    5.791835
+       2001 #|
+  Biomarker  |   10.85973   1.272862     8.53   0.000     8.364894    13.35456
+       2002 #|
+No biomar..  |   4.050405   .5677019     7.13   0.000     2.937698    5.163112
+       2002 #|
+  Biomarker  |   8.852459   1.083496     8.17   0.000     6.728785    10.97613
+       2003 #|
+No biomar..  |   3.471074   .5439822     6.38   0.000     2.404858     4.53729
+       2003 #|
+  Biomarker  |   6.266319   .9668921     6.48   0.000     4.371191    8.161446
+       2004 #|
+No biomar..  |   4.918033   .4945462     9.94   0.000     3.948712    5.887353
+       2004 #|
+  Biomarker  |   7.222222   .8142927     8.87   0.000     5.626193    8.818252
+       2005 #|
+No biomar..  |   4.229122   .4378133     9.66   0.000     3.370999    5.087245
+       2005 #|
+  Biomarker  |    7.36377    .726177    10.14   0.000     5.940449    8.787092
+       2006 #|
+No biomar..  |   2.954899   .4308353     6.86   0.000     2.110453    3.799345
+       2006 #|
+  Biomarker  |   8.383234   .6548384    12.80   0.000     7.099737     9.66673
+       2007 #|
+No biomar..  |   2.479339   .4300557     5.77   0.000     1.636421    3.322257
+       2007 #|
+  Biomarker  |   6.726908   .5995808    11.22   0.000     5.551717    7.902098
+       2008 #|
+No biomar..  |   2.879581   .4329729     6.65   0.000     2.030946    3.728217
+       2008 #|
+  Biomarker  |   4.896422   .5806509     8.43   0.000     3.758335    6.034509
+       2009 #|
+No biomar..  |   2.528241   .4388718     5.76   0.000     1.668044    3.388438
+       2009 #|
+  Biomarker  |   4.654896   .5360661     8.68   0.000     3.604195    5.705596
+       2010 #|
+No biomar..  |   1.262778   .4640142     2.72   0.007     .3533011    2.172255
+       2010 #|
+  Biomarker  |   4.057971   .5093753     7.97   0.000     3.059585    5.056357
+       2011 #|
+No biomar..  |   1.195457   .4626254     2.58   0.010     .2887024    2.102212
+       2011 #|
+  Biomarker  |   3.455285   .4925317     7.02   0.000     2.489913    4.420656
+       2012 #|
+No biomar..  |   1.112485   .4704226     2.36   0.018      .190447    2.034522
+       2012 #|
+  Biomarker  |   2.888752   .4691196     6.16   0.000     1.969269    3.808236
+       2013 #|
+No biomar..  |   2.144772   .4898837     4.38   0.000      1.18459    3.104954
+       2013 #|
+  Biomarker  |   3.807107   .4766497     7.99   0.000     2.872864    4.741349
+       2014 #|
+No biomar..  |   1.808176   .5305592     3.41   0.001     .7682696    2.848083
+       2014 #|
+  Biomarker  |   2.928071   .4774076     6.13   0.000     1.992343      3.8638
+       2015 #|
+No biomar..  |   2.625483   .5258266     4.99   0.000     1.594852    3.656113
+       2015 #|
+  Biomarker  |   3.378016   .4381653     7.71   0.000     2.519203    4.236829
+------------------------------------------------------------------------------
+
+  Variables that uniquely identify margins: start_year biomarker_included
+(file ../reports/figures/nih-bmkr-yr-all.eps written in EPS format)
+
+      Source |       SS           df       MS      Number of obs   =    42,591
+-------------+----------------------------------   F(41, 42549)    =     11.16
+       Model |  163874.541        41  3996.94002   Prob > F        =    0.0000
+    Residual |  15235059.5    42,549  358.059167   R-squared       =    0.0106
+-------------+----------------------------------   Adj R-squared   =    0.0097
+       Total |    15398934    42,590  361.562199   Root MSE        =    18.922
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -1.848371   1.579149    -1.17   0.242    -4.943535    1.246793
+       1997  |   1.330934   1.481408     0.90   0.369    -1.572654    4.234522
+       1998  |  -.7053031   1.407061    -0.50   0.616     -3.46317    2.052564
+       1999  |   .1127329   1.346446     0.08   0.933    -2.526329    2.751794
+       2000  |  -.4734759   1.340538    -0.35   0.724    -3.100958    2.154006
+       2001  |  -1.459482    1.32058    -1.11   0.269    -4.047844     1.12888
+       2002  |  -1.964633   1.291655    -1.52   0.128    -4.496302    .5670367
+       2003  |  -2.543963   1.281407    -1.99   0.047    -5.055546   -.0323803
+       2004  |  -1.097005   1.261215    -0.87   0.384    -3.569011    1.375001
+       2005  |  -1.785916   1.240068    -1.44   0.150    -4.216472    .6446414
+       2006  |  -3.060139   1.237621    -2.47   0.013    -5.485901   -.6343768
+       2007  |  -3.535699    1.23735    -2.86   0.004    -5.960929   -1.110468
+       2008  |  -3.135456   1.238367    -2.53   0.011     -5.56268   -.7082328
+       2009  |  -3.486797   1.240442    -2.81   0.005    -5.918087   -1.055506
+       2010  |  -4.752259   1.249558    -3.80   0.000    -7.201419     -2.3031
+       2011  |   -4.81958   1.249043    -3.86   0.000     -7.26773   -2.371431
+       2012  |  -4.902553   1.251952    -3.92   0.000    -7.356404   -2.448702
+       2013  |  -3.870265   1.259394    -3.07   0.002    -6.338702   -1.401828
+       2014  |  -4.206861   1.275766    -3.30   0.001    -6.707389   -1.706334
+       2015  |  -3.389555   1.273806    -2.66   0.008    -5.886239   -.8928709
+             |
+biom~ncluded |
+  Biomarker  |  -2.566762   3.700399    -0.69   0.488    -9.819617    4.686094
+             |
+  start_year#|
+biom~ncluded |
+       1996 #|
+  Biomarker  |   6.092403   4.901182     1.24   0.214    -3.514011    15.69882
+       1997 #|
+  Biomarker  |    5.22079   4.658607     1.12   0.262    -3.910172    14.35175
+       1998 #|
+  Biomarker  |   6.347936   4.289002     1.48   0.139    -2.058593    14.75447
+       1999 #|
+  Biomarker  |   11.56504   4.143511     2.79   0.005     3.443678    19.68641
+       2000 #|
+  Biomarker  |   6.013964   4.019388     1.50   0.135    -1.864116    13.89204
+       2001 #|
+  Biomarker  |   8.870935   3.963707     2.24   0.025      1.10199    16.63988
+       2002 #|
+  Biomarker  |   7.368816   3.897333     1.89   0.059     -.270034    15.00767
+       2003 #|
+  Biomarker  |   5.362006   3.863127     1.39   0.165      -2.2098    12.93381
+       2004 #|
+  Biomarker  |   4.870951   3.821074     1.27   0.202    -2.618429    12.36033
+       2005 #|
+  Biomarker  |    5.70141    3.79631     1.50   0.133    -1.739432    13.14225
+       2006 #|
+  Biomarker  |   7.995096   3.782511     2.11   0.035     .5813007    15.40889
+       2007 #|
+  Biomarker  |   6.814331   3.773248     1.81   0.071    -.5813099    14.20997
+       2008 #|
+  Biomarker  |   4.583602    3.77062     1.22   0.224    -2.806887    11.97409
+       2009 #|
+  Biomarker  |   4.693416   3.764695     1.25   0.213    -2.685461    12.07229
+       2010 #|
+  Biomarker  |   5.361955   3.764004     1.42   0.154    -2.015568    12.73948
+       2011 #|
+  Biomarker  |   4.826589   3.761591     1.28   0.199    -2.546203    12.19938
+       2012 #|
+  Biomarker  |   4.343029   3.759565     1.16   0.248    -3.025791    11.71185
+       2013 #|
+  Biomarker  |   4.229096   3.762996     1.12   0.261    -3.146449    11.60464
+       2014 #|
+  Biomarker  |   3.686657   3.768603     0.98   0.328    -3.699879    11.07319
+       2015 #|
+  Biomarker  |   3.319295   3.763169     0.88   0.378    -4.056589    10.69518
+             |
+       _cons |   6.015038    1.16021     5.18   0.000     3.741003    8.289072
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     42,591
+                                                Subpop. no. obs   =     26,326
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1995  |   6.015038    1.16021     5.18   0.000     3.741003    8.289072
+       1996  |   4.166667   1.071273     3.89   0.000     2.066951    6.266383
+       1997  |   7.345972   .9211305     7.97   0.000     5.540538    9.151406
+       1998  |   5.309735   .7960735     6.67   0.000     3.749415    6.870054
+       1999  |   6.127771   .6832501     8.97   0.000     4.788587    7.466954
+       2000  |   5.541562   .6715327     8.25   0.000     4.225344    6.857779
+       2001  |   4.555556   .6307484     7.22   0.000     3.319276    5.791835
+       2002  |   4.050405   .5677019     7.13   0.000     2.937698    5.163112
+       2003  |   3.471074   .5439822     6.38   0.000     2.404858     4.53729
+       2004  |   4.918033   .4945462     9.94   0.000     3.948712    5.887353
+       2005  |   4.229122   .4378133     9.66   0.000     3.370999    5.087245
+       2006  |   2.954899   .4308353     6.86   0.000     2.110453    3.799345
+       2007  |   2.479339   .4300557     5.77   0.000     1.636421    3.322257
+       2008  |   2.879581   .4329729     6.65   0.000     2.030946    3.728217
+       2009  |   2.528241   .4388718     5.76   0.000     1.668044    3.388438
+       2010  |   1.262778   .4640142     2.72   0.007     .3533011    2.172255
+       2011  |   1.195457   .4626254     2.58   0.010     .2887024    2.102212
+       2012  |   1.112485   .4704226     2.36   0.018      .190447    2.034522
+       2013  |   2.144772   .4898837     4.38   0.000      1.18459    3.104954
+       2014  |   1.808176   .5305592     3.41   0.001     .7682696    2.848083
+       2015  |   2.625483   .5258266     4.99   0.000     1.594852    3.656113
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =    42,591
+-------------+----------------------------------   F(41, 42549)    =     11.16
+       Model |  163874.541        41  3996.94002   Prob > F        =    0.0000
+    Residual |  15235059.5    42,549  358.059167   R-squared       =    0.0106
+-------------+----------------------------------   Adj R-squared   =    0.0097
+       Total |    15398934    42,590  361.562199   Root MSE        =    18.922
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -1.848371   1.579149    -1.17   0.242    -4.943535    1.246793
+       1997  |   1.330934   1.481408     0.90   0.369    -1.572654    4.234522
+       1998  |  -.7053031   1.407061    -0.50   0.616     -3.46317    2.052564
+       1999  |   .1127329   1.346446     0.08   0.933    -2.526329    2.751794
+       2000  |  -.4734759   1.340538    -0.35   0.724    -3.100958    2.154006
+       2001  |  -1.459482    1.32058    -1.11   0.269    -4.047844     1.12888
+       2002  |  -1.964633   1.291655    -1.52   0.128    -4.496302    .5670367
+       2003  |  -2.543963   1.281407    -1.99   0.047    -5.055546   -.0323803
+       2004  |  -1.097005   1.261215    -0.87   0.384    -3.569011    1.375001
+       2005  |  -1.785916   1.240068    -1.44   0.150    -4.216472    .6446414
+       2006  |  -3.060139   1.237621    -2.47   0.013    -5.485901   -.6343768
+       2007  |  -3.535699    1.23735    -2.86   0.004    -5.960929   -1.110468
+       2008  |  -3.135456   1.238367    -2.53   0.011     -5.56268   -.7082328
+       2009  |  -3.486797   1.240442    -2.81   0.005    -5.918087   -1.055506
+       2010  |  -4.752259   1.249558    -3.80   0.000    -7.201419     -2.3031
+       2011  |   -4.81958   1.249043    -3.86   0.000     -7.26773   -2.371431
+       2012  |  -4.902553   1.251952    -3.92   0.000    -7.356404   -2.448702
+       2013  |  -3.870265   1.259394    -3.07   0.002    -6.338702   -1.401828
+       2014  |  -4.206861   1.275766    -3.30   0.001    -6.707389   -1.706334
+       2015  |  -3.389555   1.273806    -2.66   0.008    -5.886239   -.8928709
+             |
+biom~ncluded |
+  Biomarker  |  -2.566762   3.700399    -0.69   0.488    -9.819617    4.686094
+             |
+  start_year#|
+biom~ncluded |
+       1996 #|
+  Biomarker  |   6.092403   4.901182     1.24   0.214    -3.514011    15.69882
+       1997 #|
+  Biomarker  |    5.22079   4.658607     1.12   0.262    -3.910172    14.35175
+       1998 #|
+  Biomarker  |   6.347936   4.289002     1.48   0.139    -2.058593    14.75447
+       1999 #|
+  Biomarker  |   11.56504   4.143511     2.79   0.005     3.443678    19.68641
+       2000 #|
+  Biomarker  |   6.013964   4.019388     1.50   0.135    -1.864116    13.89204
+       2001 #|
+  Biomarker  |   8.870935   3.963707     2.24   0.025      1.10199    16.63988
+       2002 #|
+  Biomarker  |   7.368816   3.897333     1.89   0.059     -.270034    15.00767
+       2003 #|
+  Biomarker  |   5.362006   3.863127     1.39   0.165      -2.2098    12.93381
+       2004 #|
+  Biomarker  |   4.870951   3.821074     1.27   0.202    -2.618429    12.36033
+       2005 #|
+  Biomarker  |    5.70141    3.79631     1.50   0.133    -1.739432    13.14225
+       2006 #|
+  Biomarker  |   7.995096   3.782511     2.11   0.035     .5813007    15.40889
+       2007 #|
+  Biomarker  |   6.814331   3.773248     1.81   0.071    -.5813099    14.20997
+       2008 #|
+  Biomarker  |   4.583602    3.77062     1.22   0.224    -2.806887    11.97409
+       2009 #|
+  Biomarker  |   4.693416   3.764695     1.25   0.213    -2.685461    12.07229
+       2010 #|
+  Biomarker  |   5.361955   3.764004     1.42   0.154    -2.015568    12.73948
+       2011 #|
+  Biomarker  |   4.826589   3.761591     1.28   0.199    -2.546203    12.19938
+       2012 #|
+  Biomarker  |   4.343029   3.759565     1.16   0.248    -3.025791    11.71185
+       2013 #|
+  Biomarker  |   4.229096   3.762996     1.12   0.261    -3.146449    11.60464
+       2014 #|
+  Biomarker  |   3.686657   3.768603     0.98   0.328    -3.699879    11.07319
+       2015 #|
+  Biomarker  |   3.319295   3.763169     0.88   0.378    -4.056589    10.69518
+             |
+       _cons |   6.015038    1.16021     5.18   0.000     3.741003    8.289072
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     42,591
+                                                Subpop. no. obs   =     16,265
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1995  |   3.448276   3.513811     0.98   0.326    -3.438863    10.33541
+       1996  |   7.692308   3.030017     2.54   0.011     1.753414     13.6312
+       1997  |         10   2.676039     3.74   0.000     4.754911    15.24509
+       1998  |   9.090909    2.01714     4.51   0.000     5.137275    13.04454
+       1999  |   15.12605   1.734618     8.72   0.000     11.72616    18.52594
+       2000  |   8.988764   1.418298     6.34   0.000     6.208873    11.76866
+       2001  |   10.85973   1.272862     8.53   0.000     8.364894    13.35456
+       2002  |   8.852459   1.083496     8.17   0.000     6.728785    10.97613
+       2003  |   6.266319   .9668921     6.48   0.000     4.371191    8.161446
+       2004  |   7.222222   .8142927     8.87   0.000     5.626193    8.818252
+       2005  |    7.36377    .726177    10.14   0.000     5.940449    8.787092
+       2006  |   8.383234   .6548384    12.80   0.000     7.099737     9.66673
+       2007  |   6.726908   .5995808    11.22   0.000     5.551717    7.902098
+       2008  |   4.896422   .5806509     8.43   0.000     3.758335    6.034509
+       2009  |   4.654896   .5360661     8.68   0.000     3.604195    5.705596
+       2010  |   4.057971   .5093753     7.97   0.000     3.059585    5.056357
+       2011  |   3.455285   .4925317     7.02   0.000     2.489913    4.420656
+       2012  |   2.888752   .4691196     6.16   0.000     1.969269    3.808236
+       2013  |   3.807107   .4766497     7.99   0.000     2.872864    4.741349
+       2014  |   2.928071   .4774076     6.13   0.000     1.992343      3.8638
+       2015  |   3.378016   .4381653     7.71   0.000     2.519203    4.236829
+------------------------------------------------------------------------------
+(output written to ../reports/tables/finished/nih-bmkr-yr-all.tex)
+(25,001 observations deleted)
+
+      Source |       SS           df       MS      Number of obs   =    17,590
+-------------+----------------------------------   F(41, 17548)    =      5.26
+       Model |   167351.66        41  4081.74781   Prob > F        =    0.0000
+    Residual |    13619832    17,548  776.147251   R-squared       =    0.0121
+-------------+----------------------------------   Adj R-squared   =    0.0098
+       Total |  13787183.6    17,589  783.852614   Root MSE        =    27.859
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -6.987296   3.966049    -1.76   0.078    -14.76114    .7865529
+       1997  |  -1.724138   3.618573    -0.48   0.634    -8.816899    5.368623
+       1998  |  -7.481714   3.426892    -2.18   0.029    -14.19876   -.7646662
+       1999  |  -7.676519   3.281646    -2.34   0.019    -14.10887   -1.244167
+       2000  |   -6.69164   3.329144    -2.01   0.044    -13.21709   -.1661869
+       2001  |  -9.530045   3.299419    -2.89   0.004    -15.99723   -3.062858
+       2002  |  -9.160035   3.259916    -2.81   0.005    -15.54979   -2.770277
+       2003  |   -10.1908   3.236283    -3.15   0.002    -16.53424   -3.847369
+       2004  |  -7.905672   3.183687    -2.48   0.013    -14.14601    -1.66533
+       2005  |  -8.098732   3.162391    -2.56   0.010    -14.29733   -1.900133
+       2006  |  -11.00366   3.159588    -3.48   0.000    -17.19677   -4.810559
+       2007  |  -11.74261   3.161681    -3.71   0.000    -17.93981   -5.545396
+       2008  |  -11.52267    3.16028    -3.65   0.000    -17.71713   -5.328211
+       2009  |  -12.57363   3.161681    -3.98   0.000    -18.77084   -6.376421
+       2010  |  -14.42105   3.223109    -4.47   0.000    -20.73866   -8.103438
+       2011  |  -15.17149    3.23773    -4.69   0.000    -21.51776   -8.825216
+       2012  |  -14.55285   3.252096    -4.47   0.000    -20.92728    -8.17842
+       2013  |  -12.02138   3.251016    -3.70   0.000    -18.39369   -5.649064
+       2014  |  -13.81415   3.270675    -4.22   0.000    -20.22499   -7.403299
+       2015  |  -11.52212   3.238705    -3.56   0.000     -17.8703   -5.173936
+             |
+biomarker_~d |
+  Biomarker  |   -13.3908   6.908589    -1.94   0.053    -26.93232    .1507141
+             |
+  start_year#|
+biomarker_~d |
+       1996 #|
+  Biomarker  |   10.68295   9.395873     1.14   0.256    -7.733896    29.09979
+       1997 #|
+  Biomarker  |   11.00985   8.923059     1.23   0.217    -6.480228    28.49993
+       1998 #|
+  Biomarker  |    13.3908   8.041313     1.67   0.096    -2.370967    29.15258
+       1999 #|
+  Biomarker  |   21.19504   7.691465     2.76   0.006     6.119004    36.27107
+       2000 #|
+  Biomarker  |   13.61825   7.550575     1.80   0.071     -1.18163    28.41812
+       2001 #|
+  Biomarker  |   21.58431   7.463925     2.89   0.004     6.954276    36.21434
+       2002 #|
+  Biomarker  |   17.31793   7.315695     2.37   0.018     2.978442    31.65742
+       2003 #|
+  Biomarker  |   15.14751     7.2554     2.09   0.037     .9262102    29.36882
+       2004 #|
+  Biomarker  |   15.15057   7.182143     2.11   0.035     1.072857    29.22828
+       2005 #|
+  Biomarker  |   16.32187   7.137662     2.29   0.022     2.331347     30.3124
+       2006 #|
+  Biomarker  |    21.4771   7.112162     3.02   0.003     7.536562    35.41765
+       2007 #|
+  Biomarker  |   19.91626    7.09597     2.81   0.005     6.007453    33.82506
+       2008 #|
+  Biomarker  |   15.86847   7.088404     2.24   0.025     1.974492    29.76244
+       2009 #|
+  Biomarker  |   17.03072   7.082575     2.40   0.016     3.148173    30.91327
+       2010 #|
+  Biomarker  |   17.62538   7.099103     2.48   0.013     3.710439    31.54033
+       2011 #|
+  Biomarker  |   18.00559   7.105104     2.53   0.011     4.078882     31.9323
+       2012 #|
+  Biomarker  |   16.47014   7.109897     2.32   0.021     2.534042    30.40625
+       2013 #|
+  Biomarker  |   15.55973   7.106313     2.19   0.029     1.630649    29.48881
+       2014 #|
+  Biomarker  |   14.59449   7.115214     2.05   0.040     .6479664    28.54102
+       2015 #|
+  Biomarker  |   14.44561   7.096258     2.04   0.042     .5362452    28.35498
+             |
+       _cons |    18.3908   2.986843     6.16   0.000      12.5363    24.24531
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     17,590
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year biomarker_included
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year#|
+biomarker_~d |
+       1995 #|
+No biomar..  |    18.3908   2.986843     6.16   0.000      12.5363    24.24531
+       1995 #|
+  Biomarker  |          5   6.229556     0.80   0.422    -7.210547    17.21055
+       1996 #|
+No biomar..  |   11.40351   2.609274     4.37   0.000     6.289074    16.51794
+       1996 #|
+  Biomarker  |   8.695652   5.809091     1.50   0.134    -2.690741    20.08205
+       1997 #|
+No biomar..  |   16.66667   2.042752     8.16   0.000     12.66267    20.67066
+       1997 #|
+  Biomarker  |   14.28571   5.264935     2.71   0.007     3.965919    24.60551
+       1998 #|
+No biomar..  |   10.90909   1.679986     6.49   0.000     7.616151    14.20203
+       1998 #|
+  Biomarker  |   10.90909   3.756563     2.90   0.004     3.545854    18.27233
+       1999 #|
+No biomar..  |   10.71429     1.3594     7.88   0.000     8.049726    13.37885
+       1999 #|
+  Biomarker  |   18.51852   3.095491     5.98   0.000     12.45105    24.58599
+       2000 #|
+No biomar..  |   11.69916   1.470364     7.96   0.000     8.817105    14.58122
+       2000 #|
+  Biomarker  |   11.92661   2.668448     4.47   0.000     6.696182    17.15703
+       2001 #|
+No biomar..  |   8.860759    1.40176     6.32   0.000     6.113172    11.60835
+       2001 #|
+  Biomarker  |   17.05426   2.452885     6.95   0.000     12.24637    21.86216
+       2002 #|
+No biomar..  |   9.230769    1.30607     7.07   0.000     6.670743     11.7908
+       2002 #|
+  Biomarker  |   13.15789   2.021135     6.51   0.000      9.19627    17.11952
+       2003 #|
+No biomar..  |        8.2   1.245911     6.58   0.000     5.757891    10.64211
+       2003 #|
+  Biomarker  |    9.95671   1.833015     5.43   0.000     6.363818     13.5496
+       2004 #|
+No biomar..  |   10.48513   1.102102     9.51   0.000     8.324905    12.64536
+       2004 #|
+  Biomarker  |    12.2449   1.624794     7.54   0.000      9.06014    15.42966
+       2005 #|
+No biomar..  |   10.29207   1.038981     9.91   0.000     8.255566    12.32858
+       2005 #|
+  Biomarker  |   13.22314    1.46224     9.04   0.000       10.357    16.08928
+       2006 #|
+No biomar..  |   7.387141   1.030418     7.17   0.000      5.36742    9.406862
+       2006 #|
+  Biomarker  |   15.47344   1.338838    11.56   0.000     12.84919     18.0977
+       2007 #|
+No biomar..  |   6.648199    1.03682     6.41   0.000     4.615929     8.68047
+       2007 #|
+  Biomarker  |   13.17365   1.244667    10.58   0.000     10.73398    15.61332
+       2008 #|
+No biomar..  |   6.868132   1.032539     6.65   0.000     4.844253     8.89201
+       2008 #|
+  Biomarker  |   9.345794   1.204468     7.76   0.000     6.984918    11.70667
+       2009 #|
+No biomar..  |   5.817175    1.03682     5.61   0.000     3.784904    7.849445
+       2009 #|
+  Biomarker  |   9.457093    1.16588     8.11   0.000     7.171852    11.74233
+       2010 #|
+No biomar..  |   3.969754   1.211279     3.28   0.001     1.595527    6.343981
+       2010 #|
+  Biomarker  |   8.204334   1.096114     7.48   0.000     6.055842    10.35283
+       2011 #|
+No biomar..  |   3.219316   1.249666     2.58   0.010     .7698471    5.668785
+       2011 #|
+  Biomarker  |   7.834101   1.091897     7.17   0.000     5.693875    9.974327
+       2012 #|
+No biomar..  |   3.837953   1.286428     2.98   0.003     1.316426     6.35948
+       2012 #|
+  Biomarker  |   6.917293   1.080342     6.40   0.000     4.799716    9.034871
+       2013 #|
+No biomar..  |   6.369427   1.283694     4.96   0.000     3.853259    8.885595
+       2013 #|
+  Biomarker  |    8.53835   1.059822     8.06   0.000     6.460993    10.61571
+       2014 #|
+No biomar..  |   4.576659   1.332697     3.43   0.001     1.964441    7.188877
+       2014 #|
+  Biomarker  |   5.780347   1.059056     5.46   0.000     3.704492    7.856202
+       2015 #|
+No biomar..  |   6.868687   1.252188     5.49   0.000     4.414275    9.323099
+       2015 #|
+  Biomarker  |   7.923497   1.029714     7.69   0.000     5.905156    9.941838
+------------------------------------------------------------------------------
+
+  Variables that uniquely identify margins: start_year biomarker_included
+(file ../reports/figures/nih-bmkr-yr-us.eps written in EPS format)
+
+      Source |       SS           df       MS      Number of obs   =    17,590
+-------------+----------------------------------   F(41, 17548)    =      5.26
+       Model |   167351.66        41  4081.74781   Prob > F        =    0.0000
+    Residual |    13619832    17,548  776.147251   R-squared       =    0.0121
+-------------+----------------------------------   Adj R-squared   =    0.0098
+       Total |  13787183.6    17,589  783.852614   Root MSE        =    27.859
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -6.987296   3.966049    -1.76   0.078    -14.76114    .7865529
+       1997  |  -1.724138   3.618573    -0.48   0.634    -8.816899    5.368623
+       1998  |  -7.481714   3.426892    -2.18   0.029    -14.19876   -.7646662
+       1999  |  -7.676519   3.281646    -2.34   0.019    -14.10887   -1.244167
+       2000  |   -6.69164   3.329144    -2.01   0.044    -13.21709   -.1661869
+       2001  |  -9.530045   3.299419    -2.89   0.004    -15.99723   -3.062858
+       2002  |  -9.160035   3.259916    -2.81   0.005    -15.54979   -2.770277
+       2003  |   -10.1908   3.236283    -3.15   0.002    -16.53424   -3.847369
+       2004  |  -7.905672   3.183687    -2.48   0.013    -14.14601    -1.66533
+       2005  |  -8.098732   3.162391    -2.56   0.010    -14.29733   -1.900133
+       2006  |  -11.00366   3.159588    -3.48   0.000    -17.19677   -4.810559
+       2007  |  -11.74261   3.161681    -3.71   0.000    -17.93981   -5.545396
+       2008  |  -11.52267    3.16028    -3.65   0.000    -17.71713   -5.328211
+       2009  |  -12.57363   3.161681    -3.98   0.000    -18.77084   -6.376421
+       2010  |  -14.42105   3.223109    -4.47   0.000    -20.73866   -8.103438
+       2011  |  -15.17149    3.23773    -4.69   0.000    -21.51776   -8.825216
+       2012  |  -14.55285   3.252096    -4.47   0.000    -20.92728    -8.17842
+       2013  |  -12.02138   3.251016    -3.70   0.000    -18.39369   -5.649064
+       2014  |  -13.81415   3.270675    -4.22   0.000    -20.22499   -7.403299
+       2015  |  -11.52212   3.238705    -3.56   0.000     -17.8703   -5.173936
+             |
+biom~ncluded |
+  Biomarker  |   -13.3908   6.908589    -1.94   0.053    -26.93232    .1507141
+             |
+  start_year#|
+biom~ncluded |
+       1996 #|
+  Biomarker  |   10.68295   9.395873     1.14   0.256    -7.733896    29.09979
+       1997 #|
+  Biomarker  |   11.00985   8.923059     1.23   0.217    -6.480228    28.49993
+       1998 #|
+  Biomarker  |    13.3908   8.041313     1.67   0.096    -2.370967    29.15258
+       1999 #|
+  Biomarker  |   21.19504   7.691465     2.76   0.006     6.119004    36.27107
+       2000 #|
+  Biomarker  |   13.61825   7.550575     1.80   0.071     -1.18163    28.41812
+       2001 #|
+  Biomarker  |   21.58431   7.463925     2.89   0.004     6.954276    36.21434
+       2002 #|
+  Biomarker  |   17.31793   7.315695     2.37   0.018     2.978442    31.65742
+       2003 #|
+  Biomarker  |   15.14751     7.2554     2.09   0.037     .9262102    29.36882
+       2004 #|
+  Biomarker  |   15.15057   7.182143     2.11   0.035     1.072857    29.22828
+       2005 #|
+  Biomarker  |   16.32187   7.137662     2.29   0.022     2.331347     30.3124
+       2006 #|
+  Biomarker  |    21.4771   7.112162     3.02   0.003     7.536562    35.41765
+       2007 #|
+  Biomarker  |   19.91626    7.09597     2.81   0.005     6.007453    33.82506
+       2008 #|
+  Biomarker  |   15.86847   7.088404     2.24   0.025     1.974492    29.76244
+       2009 #|
+  Biomarker  |   17.03072   7.082575     2.40   0.016     3.148173    30.91327
+       2010 #|
+  Biomarker  |   17.62538   7.099103     2.48   0.013     3.710439    31.54033
+       2011 #|
+  Biomarker  |   18.00559   7.105104     2.53   0.011     4.078882     31.9323
+       2012 #|
+  Biomarker  |   16.47014   7.109897     2.32   0.021     2.534042    30.40625
+       2013 #|
+  Biomarker  |   15.55973   7.106313     2.19   0.029     1.630649    29.48881
+       2014 #|
+  Biomarker  |   14.59449   7.115214     2.05   0.040     .6479664    28.54102
+       2015 #|
+  Biomarker  |   14.44561   7.096258     2.04   0.042     .5362452    28.35498
+             |
+       _cons |    18.3908   2.986843     6.16   0.000      12.5363    24.24531
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     17,590
+                                                Subpop. no. obs   =      9,950
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1995  |    18.3908   2.986843     6.16   0.000      12.5363    24.24531
+       1996  |   11.40351   2.609274     4.37   0.000     6.289074    16.51794
+       1997  |   16.66667   2.042752     8.16   0.000     12.66267    20.67066
+       1998  |   10.90909   1.679986     6.49   0.000     7.616151    14.20203
+       1999  |   10.71429     1.3594     7.88   0.000     8.049726    13.37885
+       2000  |   11.69916   1.470364     7.96   0.000     8.817105    14.58122
+       2001  |   8.860759    1.40176     6.32   0.000     6.113172    11.60835
+       2002  |   9.230769    1.30607     7.07   0.000     6.670743     11.7908
+       2003  |        8.2   1.245911     6.58   0.000     5.757891    10.64211
+       2004  |   10.48513   1.102102     9.51   0.000     8.324905    12.64536
+       2005  |   10.29207   1.038981     9.91   0.000     8.255566    12.32858
+       2006  |   7.387141   1.030418     7.17   0.000      5.36742    9.406862
+       2007  |   6.648199    1.03682     6.41   0.000     4.615929     8.68047
+       2008  |   6.868132   1.032539     6.65   0.000     4.844253     8.89201
+       2009  |   5.817175    1.03682     5.61   0.000     3.784904    7.849445
+       2010  |   3.969754   1.211279     3.28   0.001     1.595527    6.343981
+       2011  |   3.219316   1.249666     2.58   0.010     .7698471    5.668785
+       2012  |   3.837953   1.286428     2.98   0.003     1.316426     6.35948
+       2013  |   6.369427   1.283694     4.96   0.000     3.853259    8.885595
+       2014  |   4.576659   1.332697     3.43   0.001     1.964441    7.188877
+       2015  |   6.868687   1.252188     5.49   0.000     4.414275    9.323099
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =    17,590
+-------------+----------------------------------   F(41, 17548)    =      5.26
+       Model |   167351.66        41  4081.74781   Prob > F        =    0.0000
+    Residual |    13619832    17,548  776.147251   R-squared       =    0.0121
+-------------+----------------------------------   Adj R-squared   =    0.0098
+       Total |  13787183.6    17,589  783.852614   Root MSE        =    27.859
+
+------------------------------------------------------------------------------
+nih_times100 |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1996  |  -6.987296   3.966049    -1.76   0.078    -14.76114    .7865529
+       1997  |  -1.724138   3.618573    -0.48   0.634    -8.816899    5.368623
+       1998  |  -7.481714   3.426892    -2.18   0.029    -14.19876   -.7646662
+       1999  |  -7.676519   3.281646    -2.34   0.019    -14.10887   -1.244167
+       2000  |   -6.69164   3.329144    -2.01   0.044    -13.21709   -.1661869
+       2001  |  -9.530045   3.299419    -2.89   0.004    -15.99723   -3.062858
+       2002  |  -9.160035   3.259916    -2.81   0.005    -15.54979   -2.770277
+       2003  |   -10.1908   3.236283    -3.15   0.002    -16.53424   -3.847369
+       2004  |  -7.905672   3.183687    -2.48   0.013    -14.14601    -1.66533
+       2005  |  -8.098732   3.162391    -2.56   0.010    -14.29733   -1.900133
+       2006  |  -11.00366   3.159588    -3.48   0.000    -17.19677   -4.810559
+       2007  |  -11.74261   3.161681    -3.71   0.000    -17.93981   -5.545396
+       2008  |  -11.52267    3.16028    -3.65   0.000    -17.71713   -5.328211
+       2009  |  -12.57363   3.161681    -3.98   0.000    -18.77084   -6.376421
+       2010  |  -14.42105   3.223109    -4.47   0.000    -20.73866   -8.103438
+       2011  |  -15.17149    3.23773    -4.69   0.000    -21.51776   -8.825216
+       2012  |  -14.55285   3.252096    -4.47   0.000    -20.92728    -8.17842
+       2013  |  -12.02138   3.251016    -3.70   0.000    -18.39369   -5.649064
+       2014  |  -13.81415   3.270675    -4.22   0.000    -20.22499   -7.403299
+       2015  |  -11.52212   3.238705    -3.56   0.000     -17.8703   -5.173936
+             |
+biom~ncluded |
+  Biomarker  |   -13.3908   6.908589    -1.94   0.053    -26.93232    .1507141
+             |
+  start_year#|
+biom~ncluded |
+       1996 #|
+  Biomarker  |   10.68295   9.395873     1.14   0.256    -7.733896    29.09979
+       1997 #|
+  Biomarker  |   11.00985   8.923059     1.23   0.217    -6.480228    28.49993
+       1998 #|
+  Biomarker  |    13.3908   8.041313     1.67   0.096    -2.370967    29.15258
+       1999 #|
+  Biomarker  |   21.19504   7.691465     2.76   0.006     6.119004    36.27107
+       2000 #|
+  Biomarker  |   13.61825   7.550575     1.80   0.071     -1.18163    28.41812
+       2001 #|
+  Biomarker  |   21.58431   7.463925     2.89   0.004     6.954276    36.21434
+       2002 #|
+  Biomarker  |   17.31793   7.315695     2.37   0.018     2.978442    31.65742
+       2003 #|
+  Biomarker  |   15.14751     7.2554     2.09   0.037     .9262102    29.36882
+       2004 #|
+  Biomarker  |   15.15057   7.182143     2.11   0.035     1.072857    29.22828
+       2005 #|
+  Biomarker  |   16.32187   7.137662     2.29   0.022     2.331347     30.3124
+       2006 #|
+  Biomarker  |    21.4771   7.112162     3.02   0.003     7.536562    35.41765
+       2007 #|
+  Biomarker  |   19.91626    7.09597     2.81   0.005     6.007453    33.82506
+       2008 #|
+  Biomarker  |   15.86847   7.088404     2.24   0.025     1.974492    29.76244
+       2009 #|
+  Biomarker  |   17.03072   7.082575     2.40   0.016     3.148173    30.91327
+       2010 #|
+  Biomarker  |   17.62538   7.099103     2.48   0.013     3.710439    31.54033
+       2011 #|
+  Biomarker  |   18.00559   7.105104     2.53   0.011     4.078882     31.9323
+       2012 #|
+  Biomarker  |   16.47014   7.109897     2.32   0.021     2.534042    30.40625
+       2013 #|
+  Biomarker  |   15.55973   7.106313     2.19   0.029     1.630649    29.48881
+       2014 #|
+  Biomarker  |   14.59449   7.115214     2.05   0.040     .6479664    28.54102
+       2015 #|
+  Biomarker  |   14.44561   7.096258     2.04   0.042     .5362452    28.35498
+             |
+       _cons |    18.3908   2.986843     6.16   0.000      12.5363    24.24531
+------------------------------------------------------------------------------
+
+Predictive margins                              Number of obs     =     17,590
+                                                Subpop. no. obs   =      7,640
+Model VCE    : OLS
+
+Expression   : Linear prediction, predict()
+over         : start_year
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  start_year |
+       1995  |          5   6.229556     0.80   0.422    -7.210547    17.21055
+       1996  |   8.695652   5.809091     1.50   0.134    -2.690741    20.08205
+       1997  |   14.28571   5.264935     2.71   0.007     3.965919    24.60551
+       1998  |   10.90909   3.756563     2.90   0.004     3.545854    18.27233
+       1999  |   18.51852   3.095491     5.98   0.000     12.45105    24.58599
+       2000  |   11.92661   2.668448     4.47   0.000     6.696182    17.15703
+       2001  |   17.05426   2.452885     6.95   0.000     12.24637    21.86216
+       2002  |   13.15789   2.021135     6.51   0.000      9.19627    17.11952
+       2003  |    9.95671   1.833015     5.43   0.000     6.363818     13.5496
+       2004  |    12.2449   1.624794     7.54   0.000      9.06014    15.42966
+       2005  |   13.22314    1.46224     9.04   0.000       10.357    16.08928
+       2006  |   15.47344   1.338838    11.56   0.000     12.84919     18.0977
+       2007  |   13.17365   1.244667    10.58   0.000     10.73398    15.61332
+       2008  |   9.345794   1.204468     7.76   0.000     6.984918    11.70667
+       2009  |   9.457093    1.16588     8.11   0.000     7.171852    11.74233
+       2010  |   8.204334   1.096114     7.48   0.000     6.055842    10.35283
+       2011  |   7.834101   1.091897     7.17   0.000     5.693875    9.974327
+       2012  |   6.917293   1.080342     6.40   0.000     4.799716    9.034871
+       2013  |    8.53835   1.059822     8.06   0.000     6.460993    10.61571
+       2014  |   5.780347   1.059056     5.46   0.000     3.704492    7.856202
+       2015  |   7.923497   1.029714     7.69   0.000     5.905156    9.941838
+------------------------------------------------------------------------------
+(output written to ../reports/tables/finished/nih-bmkr-yr-us.tex)
+
+. 
+. 
+. 
+. 
+end of do-file

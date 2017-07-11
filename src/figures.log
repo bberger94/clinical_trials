@@ -1,0 +1,424 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   14.2   Copyright 1985-2015 StataCorp LP
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+18-user 8-core Stata network perpetual license:
+       Serial number:  501406201034
+         Licensed to:  National Bureau of Economic Research
+                       Cambridge, MA 02138
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+
+running /disk/admin/Linux-local/stata14/sysprofile.do ...
+
+. do figures.do 
+
+. clear all
+
+. 
+. do setup.do
+
+. global raw = "../data/raw"
+
+. global interim = "../data/interim"
+
+. global processed = "../data/processed"
+
+. 
+end of do-file
+
+. 
+. use $processed/clinical-trials.dta
+
+. 
+. program define trials_vs_year
+  1.   preserve
+  2.   contract start_year, freq(n)
+  3.   graph bar (asis) n, over(start_year, label(angle(45))) stack title("Coun
+> t of Clinical Trials by Trial Start Year")
+  4.   restore
+  5. end
+
+. 
+. program define trials_vs_x_vs_year
+  1.   syntax varlist(min=1 max=1) [if], title(string)
+  2.   local x = "`varlist'"
+  3.   display "if contains |`if'|"
+  4. 
+.   // copy value labels
+.   local xlabels : value label `x'
+  5.   summarize `x'
+  6.   local xmin = r(min)
+  7.   local xmax = r(max)
+  8.   foreach i of numlist `xmin'/`xmax' {
+  9.     local l`i' : label `xlabels' `i'
+ 10.   }
+ 11. 
+.   preserve
+ 12.   if "`if'" != "" {
+ 13.       keep `if'
+ 14.   }
+ 15.   collapse (count) n=row_id, by(start_year `x')
+ 16.   reshape wide n, i(start_year) j(`x')
+ 17. 
+.   // apply value labels
+.   foreach i of numlist `xmin'/`xmax' {
+ 18.     label variable n`i' "`l`i''"
+ 19.   }
+ 20. 
+.   graph bar (asis) n*, over(start_year, label(angle(45))) stack title(`title'
+> )
+ 21.   restore
+ 22. end
+
+. 
+. // pre: varname should be string variable that is semicolon delimited
+. program define my_hist
+  1.   syntax varlist(min=1 max=1)
+  2.   local y = "`varlist'"
+  3.   local ylabel : variable label `y'
+  4. 
+.   preserve
+  5.   drop if `y' == ""
+  6.   keep `y'
+  7.   split `y', parse("; ")
+  8.   drop `y'
+  9.   generate id = _n
+ 10.   reshape long `y', i(id) j(j)
+ 11.   drop if `y' == ""
+ 12.   replace `y' = strproper(`y')
+ 13.   graph bar (count), over(`y', label(angle(45))) title("Frequency of `ylab
+> el's Among Clinical Trials that" "Include One or More Biomarkers") ytitle("")
+ 14.   restore
+ 15. end
+
+. 
+. program define reshape_wide
+  1.   syntax varlist, i(varlist) j(varlist) value_labels(string)
+  2. 
+.   summarize `j'
+  3.   local j_max = r(max)
+  4.   foreach k of numlist 1/`j_max' {
+  5.       local l`k' : label `value_labels' `k'
+  6.   }
+  7.   reshape wide `varlist', i(`i') j(`j')
+  8.   foreach k of numlist 1/`j_max' {
+  9.       foreach x in `varlist' {
+ 10.           local my_label = strproper("`l`k''")
+ 11.           label variable `x'`k' "`my_label'"
+ 12.       }
+ 13.   }
+ 14. end
+
+. 
+. program define my_hist_vs_year
+  1.   syntax varlist(min=1 max=1)
+  2.   local y = "`varlist'"
+  3.   local ylabel : variable label `y'
+  4. 
+.   preserve
+  5.   drop if `y' == ""
+  6.   keep `y' start_year
+  7.   split `y', parse("; ")
+  8.   drop `y'
+  9.   generate id = _n
+ 10.   reshape long `y', i(id) j(j)
+ 11.   drop if `y' == ""
+ 12.   collapse (count) n=id, by(start_year `y')
+ 13.   encode `y' , generate(role)
+ 14.   drop `y'
+ 15. 
+.   reshape_wide n, i(start_year) j(role) value_labels(role)
+ 16. 
+.   graph bar (asis) n*, over(start_year, label(angle(45))) title("Frequency of
+>  `ylabel's Among Clinical Trials that" "Include One or More Biomarkers by Tri
+> al Start Year")
+ 17.   restore
+ 18. end
+
+. 
+. program define my_export
+  1.   // graph export to eps, then use convert to create png
+.   // http://teaching.sociology.ul.ie/bhalpin/wordpress/?p=135
+.   syntax anything
+  2. 
+.   graph export "../reports/figures/`anything'", replace
+  3. end
+
+. 
+. program define main
+  1.   trials_vs_year
+  2.   my_export 1-trials-by-year.eps
+  3. 
+.   label define biomarker_labels 0 "No Biomarker" 1 "Biomarker"
+  4.   label values biomarker_included biomarker_labels
+  5.   label define usa_labels 0 "Non-US" 1 "US"
+  6.   label values us_trial usa_labels
+  7.   label define nih_labels 0 "Not NIH Funded" 1 "NIH Funded"
+  8.   label values nih_yes nih_labels
+  9. 
+.   trials_vs_x_vs_year biomarker_included, title(`""Count of Clinical Trials t
+> hat Inlcude One or More Biomarkers" "by Trial Year""')
+ 10.   my_export 2-trials-by-year-biomarker.eps
+ 11.   trials_vs_x_vs_year us_trial, title(`""Count of Clinical Trials Conducte
+> d in the U.S." "by Trial Start Year""')
+ 12.   my_export 7-trials-by-year-usa.eps
+ 13.   trials_vs_x_vs_year nih_yes, title(`""Count of Clinical Trials Supported
+>  by NIH Funding Per Year""')
+ 14.   my_export 8-trials-by-year-nih.eps
+ 15.   trials_vs_x_vs_year nih_yes if biomarker_included, title(`""Count of Cli
+> nical Trials that Include One or More Biomarkers" "by Trial Start Year and NI
+> H Funding""')
+ 16.   my_export 9-trials-by-year-nih-with-biomarker.eps
+ 17.   trials_vs_x_vs_year nih_yes if !biomarker_included, title(`""Count of Cl
+> inical Trials that do not Include a Biomarker" "by Trial Start Year and NIH F
+> unding""')
+ 18.   my_export 10-trials-by-year-nih-without-biomarker.eps
+ 19. 
+.   my_hist biomarker_role
+ 20.   my_export 3-trials-by-role.eps
+ 21.   my_hist biomarker_type
+ 22.   my_export 5-trials-by-type.eps
+ 23. 
+.   my_hist_vs_year biomarker_role
+ 24.   my_export 4-trials-by-year-role.eps
+ 25.   my_hist_vs_year biomarker_type
+ 26.   my_export 6-trials-by-year-type.eps
+ 27. 
+.   graph pie , over(nih_yes) by(biomarker_included, title("Percent of Clinical
+>  Trials Supported by NIH Funding" "By Presence of Biomarkers")) plabel(_all p
+> ercent, format(%9.1fc) size(5))
+ 28.   my_export 11-nih-funding-by-biomarker.eps
+ 29. end
+
+. 
+. main
+(file ../reports/figures/1-trials-by-year.eps written in EPS format)
+if contains ||
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+biomarker_~d |     42,591    .3818882    .4858551          0          1
+(note: j = 0 1)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       42   ->      21
+Number of variables                   3   ->       3
+j variable (2 values)biomarker_included   ->   (dropped)
+xij variables:
+                                      n   ->   n0 n1
+-----------------------------------------------------------------------------
+(file ../reports/figures/2-trials-by-year-biomarker.eps written in EPS format)
+if contains ||
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    us_trial |     42,591    .4129981    .4923783          0          1
+(note: j = 0 1)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       42   ->      21
+Number of variables                   3   ->       3
+j variable (2 values)          us_trial   ->   (dropped)
+xij variables:
+                                      n   ->   n0 n1
+-----------------------------------------------------------------------------
+(file ../reports/figures/7-trials-by-year-usa.eps written in EPS format)
+if contains ||
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     nih_yes |     42,591    .0375666    .1901479          0          1
+(note: j = 0 1)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       42   ->      21
+Number of variables                   3   ->       3
+j variable (2 values)           nih_yes   ->   (dropped)
+xij variables:
+                                      n   ->   n0 n1
+-----------------------------------------------------------------------------
+(file ../reports/figures/8-trials-by-year-nih.eps written in EPS format)
+if contains |if biomarker_included|
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     nih_yes |     42,591    .0375666    .1901479          0          1
+(26,326 observations deleted)
+(note: j = 0 1)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       42   ->      21
+Number of variables                   3   ->       3
+j variable (2 values)           nih_yes   ->   (dropped)
+xij variables:
+                                      n   ->   n0 n1
+-----------------------------------------------------------------------------
+(file ../reports/figures/9-trials-by-year-nih-with-biomarker.eps written in EPS
+>  format)
+if contains |if !biomarker_included|
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+     nih_yes |     42,591    .0375666    .1901479          0          1
+(16,265 observations deleted)
+(note: j = 0 1)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       42   ->      21
+Number of variables                   3   ->       3
+j variable (2 values)           nih_yes   ->   (dropped)
+xij variables:
+                                      n   ->   n0 n1
+-----------------------------------------------------------------------------
+(file ../reports/figures/10-trials-by-year-nih-without-biomarker.eps written in
+>  EPS format)
+(26,326 observations deleted)
+variables created as string: biomarker_~1biomarker_~2biomarker_~3biomarker_~4
+(note: j = 1 2 3 4)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    16265   ->   65060
+Number of variables                   5   ->       3
+j variable (4 values)                     ->   j
+xij variables:
+biomarker_role1 biomarker_role2 ... biomarker_role4->biomarker_role
+-----------------------------------------------------------------------------
+(46,536 observations deleted)
+(18,524 real changes made)
+(file ../reports/figures/3-trials-by-role.eps written in EPS format)
+(26,326 observations deleted)
+variables created as string: biomarker_~1biomarker_~3biomarker_~5biomarker_~7
+biomarker_~2  biomarker_~4  biomarker_~6
+(note: j = 1 2 3 4 5 6 7)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    16265   ->  113855
+Number of variables                   8   ->       3
+j variable (7 values)                     ->   j
+xij variables:
+biomarker_type1 biomarker_type2 ... biomarker_type7->biomarker_type
+-----------------------------------------------------------------------------
+(77,640 observations deleted)
+(36,215 real changes made)
+(file ../reports/figures/5-trials-by-type.eps written in EPS format)
+(26,326 observations deleted)
+variables created as string: biomarker_~1biomarker_~2biomarker_~3biomarker_~4
+(note: j = 1 2 3 4)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    16265   ->   65060
+Number of variables                   6   ->       4
+j variable (4 values)                     ->   j
+xij variables:
+biomarker_role1 biomarker_role2 ... biomarker_role4->biomarker_role
+-----------------------------------------------------------------------------
+(46,536 observations deleted)
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        role |         78    2.538462    1.158731          1          4
+(note: j = 1 2 3 4)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                       78   ->      21
+Number of variables                   3   ->       5
+j variable (4 values)              role   ->   (dropped)
+xij variables:
+                                      n   ->   n1 n2 ... n4
+-----------------------------------------------------------------------------
+(file ../reports/figures/4-trials-by-year-role.eps written in EPS format)
+(26,326 observations deleted)
+variables created as string: biomarker_~1biomarker_~3biomarker_~5biomarker_~7
+biomarker_~2  biomarker_~4  biomarker_~6
+(note: j = 1 2 3 4 5 6 7)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    16265   ->  113855
+Number of variables                   9   ->       4
+j variable (7 values)                     ->   j
+xij variables:
+biomarker_type1 biomarker_type2 ... biomarker_type7->biomarker_type
+-----------------------------------------------------------------------------
+(77,640 observations deleted)
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+        role |        145           4    1.989556          1          7
+(note: j = 1 2 3 4 5 6 7)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                      145   ->      21
+Number of variables                   3   ->       8
+j variable (7 values)              role   ->   (dropped)
+xij variables:
+                                      n   ->   n1 n2 ... n7
+-----------------------------------------------------------------------------
+(file ../reports/figures/6-trials-by-year-type.eps written in EPS format)
+(file ../reports/figures/11-nih-funding-by-biomarker.eps written in EPS format)
+
+. 
+. /*
+> program define my_hist2
+>   syntax [if], title(string)
+> 
+>   preserve
+>   if "`if'" != "" {
+>       keep `if'
+>   }
+> 
+>   drop if biomarker_type == ""
+> 
+>   count
+>   local N = r(N)
+> 
+>   keep biomarker_type nih_yes
+>   split biomarker_type, parse("; ")
+>   drop biomarker_type
+>   generate id = _n
+>   reshape long biomarker_type, i(id) j(j)
+>   drop if biomarker_type == ""
+>   replace biomarker_type = strproper(biomarker_type)
+> 
+>   collapse (count) n=id, by(biomarker_type nih_yes)
+>   egen denominator =
+>   generate pct = 100 * n / `N'
+>   keep pct biomarker_type nih_yes
+>   reshape_wide pct, i(biomarker_type) j(nih_yes) value_labels(nih_yes)
+> 
+>   label variable pct0 "Non-NIH Funded"
+>   label variable pct1 "NIH-Funded"
+>   graph bar (asis) pct*, over(biomarker_type, label(angle(45))) title(`title'
+> )
+>   restore
+> end
+> 
+> my_hist2 , title("All Years")
+> my_export 13-nih-funding-by-biomarker.eps
+> my_hist2 if start_year >= 2010, title("2010-2015 Trials Only")
+> */
+. 
+end of do-file

@@ -1,0 +1,164 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   14.2   Copyright 1985-2015 StataCorp LP
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+18-user 8-core Stata network perpetual license:
+       Serial number:  501406201034
+         Licensed to:  National Bureau of Economic Research
+                       Cambridge, MA 02138
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+
+running /disk/admin/Linux-local/stata14/sysprofile.do ...
+
+. do 01_Merge_P2_Data.do 
+
+. /****************************************************************************
+> *******
+> File        : 1_Merge_P2_Data.do
+> Authors     : Alice Ndikumana
+> Created     : 20 Jun 2016
+> Modified    : 9 Sept 2016
+> Description : Merges multiple excel exports from Cortellis into a single stat
+> a dataset
+> *****************************************************************************
+> ******/
+. 
+. do setup.do
+
+. global raw = "../data/raw"
+
+. global interim = "../data/interim"
+
+. global processed = "../data/processed"
+
+. 
+end of do-file
+
+. 
+. * Stata-fies 9 excel files from 1995-2015
+. forvalues i=0/8 {
+  2.     import excel using "$raw/Clinical_Trials_Results(`i').xls", sheet("Res
+> ults") clear allstring firstrow case(lower)
+  3.     save "$raw/Clinical_Trials_Results(`i').dta", replace
+  4. }
+(note: file ../data/raw/Clinical_Trials_Results(0).dta not found)
+file ../data/raw/Clinical_Trials_Results(0).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(1).dta not found)
+file ../data/raw/Clinical_Trials_Results(1).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(2).dta not found)
+file ../data/raw/Clinical_Trials_Results(2).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(3).dta not found)
+file ../data/raw/Clinical_Trials_Results(3).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(4).dta not found)
+file ../data/raw/Clinical_Trials_Results(4).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(5).dta not found)
+file ../data/raw/Clinical_Trials_Results(5).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(6).dta not found)
+file ../data/raw/Clinical_Trials_Results(6).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(7).dta not found)
+file ../data/raw/Clinical_Trials_Results(7).dta saved
+(note: file ../data/raw/Clinical_Trials_Results(8).dta not found)
+file ../data/raw/Clinical_Trials_Results(8).dta saved
+
+. 
+. * Merges excel files into a single STATA file
+. u "$raw/Clinical_Trials_Results(0).dta", clear
+
+. forvalues i=1/8 {
+  2.     append using "$raw/Clinical_Trials_Results(`i').dta",
+  3. }
+(note: variable title was str413, now str415 to accommodate using data's
+       values)
+(note: variable condition was str1056, now str1353 to accommodate using
+       data's values)
+(note: variable primaryinterventions was str439, now str787 to accommodate
+       using data's values)
+(note: variable identifiers was str307, now str443 to accommodate using
+       data's values)
+(note: variable design was str108, now str118 to accommodate using data's
+       values)
+(note: variable ageracehealthyvolunteers was str244, now str289 to
+       accommodate using data's values)
+(note: variable class was str418, now str481 to accommodate using data's
+       values)
+(note: variable stateprovincecounty was str1753, now strL to accommodate
+       using data's values)
+(note: variable title was str415, now str428 to accommodate using data's
+       values)
+(note: variable collaboratoronly was str894, now str908 to accommodate using
+       data's values)
+(note: variable action was str1401, now str1515 to accommodate using data's
+       values)
+(note: variable activecontrols was str206, now str289 to accommodate using
+       data's values)
+(note: variable category was str84, now str87 to accommodate using data's
+       values)
+(note: variable extract was str542, now str585 to accommodate using data's
+       values)
+(note: variable scientifictitle was str511, now str610 to accommodate using
+       data's values)
+(note: variable scientifictitle was str610, now str681 to accommodate using
+       data's values)
+(note: variable title was str428, now str496 to accommodate using data's
+       values)
+(note: variable title was str496, now str525 to accommodate using data's
+       values)
+(note: variable design was str118, now str121 to accommodate using data's
+       values)
+(note: variable title was str525, now str540 to accommodate using data's
+       values)
+
+. 
+. forvalues i=0/8 {
+  2.     !rm "$raw/Clinical_Trials_Results(`i').dta"
+  3. }
+
+rm: remove regular file `../data/raw/Clinical_Trials_Results(0).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(1).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(2).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(3).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(4).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(5).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(6).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(7).dta'? 
+rm: remove regular file `../data/raw/Clinical_Trials_Results(8).dta'? 
+. 
+. * Compress and save new data set
+. compress
+  patientsegment is strL now coalesced
+  sitename is strL now coalesced
+  contactname is strL now coalesced
+  endpoints is strL now coalesced
+  aimsandscope is strL now coalesced
+  protocoldescriptiontext is strL now coalesced
+  regimens is strL now coalesced
+  resultstext is strL now coalesced
+  adverseeventstext is strL now coalesced
+  inclusioncriteriatext is strL now coalesced
+  exclusioncriteriatext is strL now coalesced
+  inclusioncriteriaindex is strL now coalesced
+  exclusioncriteriaindex is strL now coalesced
+  stateprovincecounty is strL now coalesced
+  city is strL now coalesced
+  (10,104,689 bytes saved)
+
+. save "$interim/P2_Clinical_Trial_Starts_1995-2015_merged.dta", replace
+(note: file ../data/interim/P2_Clinical_Trial_Starts_1995-2015_merged.dta not f
+> ound)
+file ../data/interim/P2_Clinical_Trial_Starts_1995-2015_merged.dta saved
+
+. 
+end of do-file

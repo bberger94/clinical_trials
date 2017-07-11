@@ -1,0 +1,41 @@
+/***********************************************************************************
+src script reference:
+Description: lists file descriptions for source code
+***********************************************************************************/
+
+01_Merge_P2_Data.do 
+	description:	Merges multiple excel exports from Cortellis into a single stata dataset
+	notes:			Loops over 9 xls files exactly (0-8)
+	
+
+02_Cleanse_P2_Data.do
+	description:	Format data from cortellis export including: changing variable type to numeric or calendar date, change variable names to lowercase, separate multiple word variable names by '_'
+
+03_Create_Dummy_Var_P2_Data.do
+	description:	Creates dummy variables for Phase2/2a/2b, US Trial, Single Primary Intervention biomarker included, each biomarker role and type. Create variable for start year
+
+04_Identify_NIH_Grants.do
+	description:	Identifies NIH grant numbers from the indicator variable in the Cortellis Clinical Trials dataset
+
+0_count_variable_categories.do
+	description:	Count number of categories for following categorical variables in P2 data:
+		patient_segment, primary_interventions, sponsor_only, collaborator_only, action, active_controls, country, category, design, age_race_healthy_volunteers, endpoint_types, endpoint, adverse_events
+
+2_Add_Biomarker_Variable_P2_Data.do
+	description:	Create list of unique biomarkers featured in P2 data
+
+2_Biomarker_Counts_P2_Data.do
+	description:	Count the number of unique biomarkers, biomarker type and biomarker roles in the data
+
+2_Map_Condition_to_ICD9Code_P2_Data.do
+	description: 	Maps cortellis conditions in P2 Cortellis Clinical Trials data to ICD-9 codes
+
+3_Summary_Statistics_P2_Data.do
+	description:	Creates summary statistics from P2 clinical trial starts from 1995 - 2015
+	notes:			*the way "nih_yes" is currently coded is not complete*
+
+4_Drug_Indications_Unmatched_to_ICD9.do
+	description:	Using an excel export of all Cortellis drugs as of 7/19, 9am, identify indications that are in Cortellis but not included in the crosswalk from Cortellis indications to ICD-9 codes recieved from John.
+
+figures.do
+	description:	Makes figures used in presentation

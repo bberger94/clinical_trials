@@ -1,3 +1,12 @@
+###############################################################################
+## 02_reshape_and_merge.R ; Author: Ben Berger;                              ##
+##                                                                           ##
+## Takes parsed data in the long format produced by "01_parse_json.R",       ##
+## and reshapes them in the wide format with each row representing a unique  ##
+## trial                                                                     ##
+###############################################################################
+
+library(dplyr)
 library(tidyr)
 library(haven)
 
@@ -13,6 +22,9 @@ my_reshape <- function(df) {
     unite(key_i, c(key, i)) %>% 
     spread(key_i, value)
 }
+
+#Load data from 01_parse_json
+load('data/long_data.RData')
 
 #Initialize a tibble with only non-json columns
 data_wide <-
@@ -35,6 +47,7 @@ data_wide <-
          phase_2 = grepl('Phase 2', phase),
          phase_3 = grepl('Phase 3', phase),
          phase_4 = grepl('Phase 4', phase),
+         biomarker_status = !is.na(biomarker_id_001)
          ) 
 
 #Replace phase_N columns with NA if phase is not specified 
@@ -49,7 +62,9 @@ data <-
     date_end = date_end_001,
     date_end_type = date_end_type_001,
     starts_with('phase'),
+    biomarker_status, 
     us_trial = us_trial_001,
+    nih_funding = nih_yes_001,
     patient_count_enrollment,
     recruitment_status = recruitment_status_001,
     starts_with('indication'),
@@ -67,10 +82,8 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = '../Dropbox/clinical_trials/data/clinical_trials_07-19-17.RData', data) 
-write_csv(data, '../Dropbox/clinical_trials/data/clinical_trials_07-19-17.csv') 
-write_dta(data, '../Dropbox/clinical_trials/data/clinical_trials_07-19-17.dta', version = 12) 
+save(file = 'Z:/clinical_trials/data/clinical_trials_07-23-17.RData', data) 
+write_csv(data, 'Z:/clinical_trials/data/clinical_trials_07-23-17.csv') 
+write_dta(data, 'Z:/clinical_trials/data/clinical_trials_07-23-17.dta', version = 12) 
 
 
-
-#write_dta('/Users/BBerger/Dropbox/clinical_trials/data/clinical_trials_toydata.dta', version = 13) 

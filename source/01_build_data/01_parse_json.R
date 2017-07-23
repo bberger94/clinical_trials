@@ -87,14 +87,15 @@ json_to_dataframe_geodata <- function(s) {
 ## Read in data
 options(stringsAsFactors = FALSE)
 #in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
-in.data <- read_csv('../Dropbox/Files_ClinTrials_Data/trials.csv')
+in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
+nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
 
 ## Subset to test functions
 set.seed(101)
-sample_index <- sample(nrow(in.data), 1000)
+sample_index <- sample(nrow(in.data), 10000)
 trials <-
   in.data %>%
-  # slice(sample_index) %>% 
+  #slice(sample_index) %>% 
   rename(trial_id = id) %>% 
   arrange(trial_id)
 
@@ -127,6 +128,14 @@ identifiers_long <-
   rename(trial_identifier_type = `@type`,
          trial_identifier = `$`
          )
+nih_long <- 
+  identifiers_long %>% 
+  mutate(trial_id_first3 = substring(trimws(trial_identifier), 1, 3)) %>% 
+  mutate(nih_yes = is.element(el = trial_id_first3, set = nih_activity_codes$nih_activity_code)) %>% 
+  select(trial_id, nih_yes) %>% 
+  group_by(trial_id) %>% 
+  summarize(nih_yes = any(nih_yes)
+            )
 date_ends_long <- 
   trials %>% 
   my_expand(trial_id, DateEnd) %>% 
@@ -158,4 +167,5 @@ us_trials_long <-
   ungroup %>% group_by(trial_id) %>% 
   summarize(us_trial = any(us_trial))
 
+save.image(file = 'data/long_data.RData')
 

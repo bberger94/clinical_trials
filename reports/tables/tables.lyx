@@ -96,7 +96,18 @@ filename "finished/nih-bmkr-count.tex"
 \align center
 \begin_inset CommandInset include
 LatexCommand input
-filename "finished/nih-bmkr-pct.tex"
+filename "finished/nih-bmkr-us-pct.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset CommandInset include
+LatexCommand input
+filename "finished/nih-bmkr-phase-pct.tex"
 
 \end_inset
 

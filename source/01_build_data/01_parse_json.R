@@ -85,18 +85,20 @@ json_to_dataframe_geodata <- function(s) {
 ## Read in data
 options(stringsAsFactors = FALSE)
 
+# Uncomment line below to modify variable construction without building from scratch
+load('data/long_data.RData')
+
 # Uncomment lines below to build from scratch
 # in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
 # in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
 # nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
-icd9_xwalk <- read_csv('../indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
+#icd9_xwalk <- read_csv('../bkthruWork_local/indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
+#icd9_xwalk <- read_csv('../indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
 
-# Uncomment below row to modify variable construction without building from scratch
-load('data/long_data.RData')
 
 ## Subset to test functions
 set.seed(101)
-sample_index <- sample(nrow(in.data), 10000)
+sample_index <- sample(nrow(in.data), 1000)
 trials <-
   in.data %>%
   #slice(sample_index) %>% 
@@ -104,6 +106,7 @@ trials <-
   arrange(trial_id)
 
 ## Parse json columns as tibbles (data_frames)
+#Companies
 collaborators_long <-
   trials %>%
   my_expand(trial_id, CompaniesCollaborator) %>%
@@ -114,13 +117,19 @@ sponsors_long <-
   my_expand(trial_id, CompaniesSponsor) %>%
   rename(sponsor_company_id = `@id`, sponsor_company_name = `$`
          )
+#Indications and ICD-9 codes
 indications_long <-
   trials %>%
   my_expand(trial_id, Indications) %>%
   rename(indication_id = `@id`, indication_name = `$`
          ) %>% 
-  left_join(icd9_xwalk, by = c('indication_name', 'cortellis_condition'))
+  mutate(indication_name = tolower(indication_name)) 
+icd9_long <- 
+  indications_long %>% 
+  left_join(icd9_xwalk, by = c('indication_name' = 'cortellis_condition')) %>% 
+  select(trial_id, starts_with('icd9'), malignant_not_specified)
 
+#Biomarkers
 biomarkers_long <- 
   trials %>% 
   my_expand(trial_id, BiomarkerNames) %>% 
@@ -146,7 +155,7 @@ biomarkers_long <-
   biomarkers_long %>% 
   select(-ends_with('_marker'))
 
-
+#Trial Identifiers and NIH funding
 identifiers_long <-
   trials %>% 
   my_expand(trial_id, Identifiers) %>% 
@@ -156,17 +165,19 @@ identifiers_long <-
 nih_long <- 
   identifiers_long %>% 
   mutate(trial_id_first3 = substring(trimws(trial_identifier), 1, 3)) %>% 
-  mutate(nih_yes = is.element(el = trial_id_first3, set = nih_activity_codes$nih_activity_code)) %>% 
-  select(trial_id, nih_yes) %>% 
+  mutate(nih_funding = is.element(el = trial_id_first3, set = nih_activity_codes$nih_activity_code)) %>% 
+  select(trial_id, nih_funding) %>% 
   group_by(trial_id) %>% 
-  summarize(nih_yes = any(nih_yes)
+  summarize(nih_funding = any(nih_funding)
             )
+#End dates
 date_ends_long <- 
   trials %>% 
   my_expand(trial_id, DateEnd) %>% 
   rename(date_end_type = `@type`,
          date_end = `$`
-         ) 
+         )
+#Trial design, endpoints, recruitment status
 trial_design_long <- 
   trials %>% 
   my_expand(trial_id, TermsDesign) %>% 
@@ -183,6 +194,7 @@ trial_recruitment_long <-
   rename(recruitment_status = `$`) %>% 
   select(-`@id`)
 
+#Trial location (US v. non-US)
 #note: us_trial is true when the US is listed as a trial site, and false when it is not AND another country IS
 #trials in which no site is listed with location in the trials data do NOT appear in us_trials_long
 us_trials_long <- 

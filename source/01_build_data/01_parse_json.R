@@ -13,9 +13,7 @@ library(dplyr)
 library(rlang)
 library(readr)
 
-## Andrew: I prefer to assert conditions instead of stopping if not a condition.
 assert <- stopifnot
-
 get_name <- function(x) as.character(UQE(x))
 
 ## Apply json_to_dataframe to each cell of a column
@@ -86,9 +84,15 @@ json_to_dataframe_geodata <- function(s) {
 #########################################
 ## Read in data
 options(stringsAsFactors = FALSE)
-#in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
-in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
-nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
+
+# Uncomment lines below to build from scratch
+# in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
+# in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
+# nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
+icd9_xwalk <- read_csv('../indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
+
+# Uncomment below row to modify variable construction without building from scratch
+load('data/long_data.RData')
 
 ## Subset to test functions
 set.seed(101)
@@ -114,14 +118,35 @@ indications_long <-
   trials %>%
   my_expand(trial_id, Indications) %>%
   rename(indication_id = `@id`, indication_name = `$`
-         )
+         ) %>% 
+  left_join(icd9_xwalk, by = c('indication_name', 'cortellis_condition'))
+
 biomarkers_long <- 
   trials %>% 
   my_expand(trial_id, BiomarkerNames) %>% 
   rename(biomarker_id = `@id`,
-         biomarker_type = `@type`,
+         biomarker_role = `@type`,
          biomarker_name = `$`
+         ) %>% 
+  mutate(disease_marker = grepl('disease', tolower(biomarker_role)),
+         toxic_marker = grepl('toxic', tolower(biomarker_role)),
+         therapeutic_marker = grepl('therapeutic', tolower(biomarker_role)),
+         not_determined_marker = grepl('not determined', tolower(biomarker_role)),
+         not_determined_marker = not_determined_marker | (!disease_marker & !toxic_marker & !therapeutic_marker)
          )
+trial_biomarkers_long <- 
+  biomarkers_long %>% 
+  group_by(trial_id) %>% 
+  summarize(disease_marker = any(disease_marker),
+            toxic_marker = any(toxic_marker),
+            therapeutic_marker = any(therapeutic_marker),
+            not_determined_marker = any(not_determined_marker)
+            )
+biomarkers_long <-
+  biomarkers_long %>% 
+  select(-ends_with('_marker'))
+
+
 identifiers_long <-
   trials %>% 
   my_expand(trial_id, Identifiers) %>% 
@@ -157,6 +182,7 @@ trial_recruitment_long <-
   my_expand(trial_id, RecruitmentStatus) %>% 
   rename(recruitment_status = `$`) %>% 
   select(-`@id`)
+
 #note: us_trial is true when the US is listed as a trial site, and false when it is not AND another country IS
 #trials in which no site is listed with location in the trials data do NOT appear in us_trials_long
 us_trials_long <- 

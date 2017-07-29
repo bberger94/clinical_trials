@@ -77,10 +77,7 @@ program define nih_bmkr_us_pct
 		collabels(none) ///
 		rename(_subpop_1 "No biomarker") ///
 		nonum ///
-		fragment ///
-		addnotes("The number of trials in columns (2) and (3) do not add up to those in (1)" ///
-			"because the location of some trials was not able to be ascertained.") ///
-		
+		fragment 		
 		
 	restore
 end
@@ -94,19 +91,16 @@ program define nih_bmkr_phase_pct
 	[report_directory(string)]
 	
 	if "`report_directory'" != "" local outfile "using `report_directory'/tables/interim/nih-bmkr-phase-pct_appended.tex"
+	eststo clear
 	preserve 
 	
 	label variable nih_funding "Number of trials receiving funding"
 	
-	quietly total nih_funding, over(biomarker_status)
-	est sto A
-	quietly total nih_funding if phase_1 == 1, over(biomarker_status)
-	est sto B
-	quietly total nih_funding if phase_2 == 1, over(biomarker_status)
-	est sto C
-	quietly total nih_funding if phase_3 == 1, over(biomarker_status)
-	est sto D
-	
+	eststo A: quietly total nih_funding, over(biomarker_status)
+	eststo B: quietly total nih_funding if phase_1 == 1, over(biomarker_status)
+	eststo C: quietly total nih_funding if phase_2 == 1, over(biomarker_status)
+	eststo D: quietly total nih_funding if phase_3 == 1, over(biomarker_status)
+		
 	esttab A B C D `outfile', ///
 		replace ///
 		title("Number of trials receiving NIH funding by presence of biomarker") ///
@@ -121,14 +115,14 @@ program define nih_bmkr_phase_pct
 	gen nih_times100 = nih_funding * 100
 	label variable nih_times100 "Percent of trials receiving funding"
 
-	quietly mean nih_times100, over(biomarker_status)
-	est sto A
-	quietly mean nih_times100 if phase_1 == 1, over(biomarker_status)
-	est sto B
-	quietly mean nih_times100 if phase_2 == 1, over(biomarker_status)
-	est sto C
-	quietly mean nih_times100 if phase_3 == 1, over(biomarker_status)
-	est sto D
+	eststo A: quietly mean nih_times100, over(biomarker_status)
+	
+	eststo B: quietly mean nih_times100 if phase_1 == 1, over(biomarker_status)
+	
+	eststo C: quietly mean nih_times100 if phase_2 == 1, over(biomarker_status)
+	
+	eststo D: quietly mean nih_times100 if phase_3 == 1, over(biomarker_status)
+	
 	
 	esttab A B C D `outfile', ///
 		append ///
@@ -141,8 +135,7 @@ program define nih_bmkr_phase_pct
 		rename(_subpop_1 "No biomarker") ///
 		nonum ///
 		fragment ///
-		addnotes("The number of trials in columns (2) and (3) do not add up to those in (1)" ///
-			"because the location of some trials was not able to be ascertained.") ///
+		
 		
 		
 	restore
@@ -158,7 +151,7 @@ program define nih_bmkrrole
 	syntax, ///
 	[report_directory(string)]
 	
-	if "`report_directory'" != "" local outfile "using `report_directory'/tables/interim/nih-bmkr-phase-pct_appended.tex"
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/nih-bmkrrole.tex"
 	preserve
 	eststo clear
 		
@@ -168,32 +161,34 @@ program define nih_bmkrrole
 	
 	quietly mean nih_times100
 	estimates store all
-
+	
+	quietly mean nih_times100 if biomarker_status == 0
+	estimates store no_biomarker
+	
 	quietly mean nih_times100 if biomarker_status == 1
 	estimates store biomarker
 	
-	quietly mean nih_times100 if disease_biomarker_role == 1
+	quietly mean nih_times100 if disease_marker_role == 1
 	estimates store disease
 
-	quietly mean nih_times100 if therapeutic_biomarker_role == 1
+	quietly mean nih_times100 if therapeutic_marker_role == 1
 	estimates store therapeutic_effect
 	
-	quietly mean nih_times100 if toxic_biomarker_role == 1
+	quietly mean nih_times100 if toxic_marker_role == 1
 	estimates store toxic_effect
 		
-	quietly mean nih_times100 if not_determined_biomarker_role == 1
+	quietly mean nih_times100 if not_determined_marker_role == 1
 	estimates store not_determined
 		
-	esttab all biomarker disease therapeutic_effect toxic_effect not_determined ///
-		`report_directory', ///
+	esttab all no_biomarker biomarker disease therapeutic_effect toxic_effect not_determined ///
+		`outfile', ///
 		replace ///
-		nostar ///
-		se ///
-		mtitle("All Trials" "Biomarker Present" "Disease" "Therapeutic effect" "Toxic effect" "Not determined") ///
-		b(1) ///
+		nostar se b(1) ///
+		mtitle("All Trials" "No Biomarker" "Biomarker present" "Disease" "Therapeutic effect" "Toxic effect" "Role not determined") ///
+		compress ///
 		label ///
-		title("Percent of Phase II trials receiving NIH funding by biomarker role") ///
-		addnote("Trials may have several biomarkers with several biomarker roles.") ///
+		title("Percent of trials receiving NIH funding by biomarker role") ///
+		addnote("Trials may employ multiple biomarkers with one or more biomarker roles.") ///
 		
 	restore
 end
@@ -206,14 +201,14 @@ program define trial_phase
 	syntax, ///
 	[report_directory(string)]
 	
-	if "`report_directory'" != "" local outfile "using `report_directory'/tables/interim/nih-bmkr-phase-pct_appended.tex"
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/trial-phase.tex"
 	quietly estpost tabulate phase
 
 	esttab . `outfile',					///
 		replace 					///
 		cells("b(fmt(%8.0gc)) pct(fmt(1))") 		///
 		title("Trials by Phase") 			///
-		collabels("Trial count" "Percent of all Phase II") ///
+		collabels("Trial count" "Percent of all Phase I-III") ///
 		nomtitle					///
 		compress 					///
 		noobs						///
@@ -262,7 +257,9 @@ program define trial_duration
 		
 	preserve
 	
-	keep if year_end >= 2000 & year_end <= 2016
+	local first_year 2000
+	local last_year 2016
+	keep if year_end >= `first_year' & year_end <= `last_year'
 	//keep if date_end_type == "actual"
 	keep if us_trial == 1
 	
@@ -286,6 +283,43 @@ program define trial_duration
 	graph export "`report_directory'/figures/trial-duration-by-phase.eps", replace
 	}
 	
+	reg duration i.year_end##i.biomarker_status
+	margins, over(year_end biomarker_status) post
+	marginsplot, ///
+		title("Average trial duration in months") ///
+		xlabel(2000(5)2015) ///
+		ylabel(18(6)54) ///
+		xtitle("Trial end year") ///
+		ytitle("Trial duration in months") ///
+		noci
+	if "`report_directory'" != "" {
+	graph export "`report_directory'/figures/trial-duration-by-bmkr.eps", replace
+	}
+	
+*Table of duration on biomarker status by end year
+	keep if year_end >= `first_year' & year_end <= `last_year'
+
+	foreach year of numlist `first_year'/`last_year' {
+	local i = `year' - `first_year' + 1
+	local labels `labels' _subpop_`i' `year'
+	}
+
+	eststo A: quietly mean duration, over(year_end)
+	eststo B: quietly mean duration if biomarker_status == 0, over(year_end)
+	eststo C: quietly mean duration if biomarker_status == 1, over(year_end)
+
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/trial-duration-by-bmkr.tex"
+	esttab A B C, coeflabels(`labels') not nostar nonum ///
+			replace ///
+			cells("b(fmt(1)) _N(fmt(%8.0gc))") ///
+			title("Average trial duration in months") ///
+			collabels("Duration" "Number of trials", lhs("End year")) ///
+			mtitles("All trials with start and end dates" ///
+				"No biomarkers" ///
+				"Biomarker(s) used" ///
+				) 	
+
+*Duration by year plot & table	
 	reg duration i.year_end
 	margins, over(year_end) post
 	marginsplot, ///
@@ -299,14 +333,167 @@ program define trial_duration
 	}
 	
 	*make table
-	if "`report_directory'" != "" local outfile "using `report_directory'/figures/nih-means.tex"
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/trial-duration.tex"
 	esttab . `outfile', ///
 		replace ///
 		cells("b(fmt(1)) _N(fmt(%8.0gc))") ///
 		title("Average trial duration in months") ///
 		not nostar nonum ///
 		label ///
-		collabels("Duration" "\# of trials with nonmissing duration", lhs("End year"))
+		collabels("Duration (months)" "\# of trials with nonmissing duration", lhs("End year"))
 	
 	restore		
 end
+
+
+
+
+
+*make yearly xtab of funding probability by biomarker presence; plot and tabulate
+cap program drop nih_bmkr_yr
+program define nih_bmkr_yr
+	syntax, ///
+	[report_directory(string)]
+	
+	foreach subset in "all" "us" {
+	preserve
+	
+	*define subset of trials
+	keep if year_start >= 1995 & year_start <= 2016
+	
+	if  "`subset'" == "all"	local samplestring "All trials"	
+	
+	else if "`subset'" == "us"{
+	keep if us_trial == 1
+	local samplestring "US trials"
+	}	
+	
+	*scale response variable to percentage scale
+	cap drop nih_times100
+	gen nih_times100 = nih_funding * 100 
+	
+	*make plot
+	reg nih_times100 i.year_start##i.biomarker_status
+	margins, over(year_start biomarker_status) post
+	marginsplot, ///
+		title("Percent of trials receiving NIH funding: `samplestring'") ///
+		xlabel(1995(5)2015) ///
+		ylabel(0(5)20) ///
+		xtitle("Trial Start Year") ///
+		ytitle("Percent of trials funded by the NIH") ///
+		yscale(r(0 20)) ///
+		noci ///
+
+	if "`report_directory'" != "" {
+	graph export "`report_directory'/figures/nih-bmkr-yr-`subset'.eps", replace
+	}
+	
+	*make table
+	eststo clear	
+	
+	quietly reg nih_times100 i.year_start
+	quietly margins, over(year_start) post
+	eststo all
+	
+	gen biomarker_excluded = 1 - biomarker_status
+	quietly reg nih_times100 i.year_start##i.biomarker_status
+	quietly margins, over(year_start) subpop(biomarker_excluded) post
+	eststo no_biomarker
+	
+	quietly reg nih_times100 i.year_start##i.biomarker_status
+	quietly margins, over(year_start) subpop(biomarker_status) post
+	eststo biomarker
+
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/nih-bmkr-yr-`subset'.tex"
+	esttab all no_biomarker biomarker `outfile', ///
+			replace ///
+			title("Percent of trials receiving NIH funding by presence of biomarker: `samplestring'") ///
+			mtitle("All trials" "No biomarker" "Biomarker") ///
+			not ///
+			nostar ///
+			b(1) ///
+			nogaps ///
+			noobs ///
+			label ///
+	
+	restore
+	}
+	
+end
+
+
+
+cap program drop nih_phase_yr
+program define nih_phase_yr
+	syntax, ///
+	[report_directory(string)]
+	
+	preserve
+	*define subset of trials
+	local first_year 1995
+	local last_year 2016
+	keep if year_start >= `first_year' & year_start <= `last_year'
+	
+	*scale response variable to percentage scale
+	cap drop nih_times100
+	gen nih_times100 = nih_funding * 100 
+	
+	*make categorical variable for phase
+	drop phase
+	gen phase = .
+	replace phase = 1 if phase_1 == 1
+	replace phase = 2 if phase_2 == 1
+	replace phase = 3 if phase_3 == 1
+	gen phase_123 = phase_1 | phase_2 | phase_3
+	
+	*make plot
+	quietly reg nih_times100 i.year_start##i.phase
+	quietly margins, over(year_start phase) post
+	marginsplot, ///
+		title("Percent of trials receiving NIH funding by trial phase") ///
+		xlabel(1995(5)2015) ///
+		ylabel(0(1)10) ///
+		xtitle("Trial Start Year") ///
+		ytitle("Percent of trials funded by the NIH") ///
+		yscale(r(0 10)) ///
+		noci ///
+
+	if "`report_directory'" != "" {
+	graph export "`report_directory'/figures/nih-phase-yr.eps", replace
+	}
+	
+	*make table
+	eststo clear	
+	eststo A: quietly mean nih_times100 if phase_123 == 1 , over(year_start)
+	eststo B: quietly mean nih_times100 if phase == 1 , over(year_start)
+	eststo C: quietly mean nih_times100 if phase == 2 , over(year_start)
+	eststo D: quietly mean nih_times100 if phase == 3 , over(year_start)
+	eststo E: quietly total phase_123 , over(year_start)
+	
+	keep if year_end >= `first_year' & year_end <= `last_year'
+
+	foreach year of numlist `first_year'/`last_year' {
+	local i = `year' - `first_year' + 1
+	local labels `labels' _subpop_`i' `year'
+	}
+
+	if "`report_directory'" != "" local outfile "using `report_directory'/tables/finished/nih-phase-yr.tex"
+	esttab A B C D E `outfile', ///
+			replace ///
+			title("Percent of trials receiving NIH funding by phase") ///
+			mtitle("Phase I-III" "Phase I" "Phase II" "Phase III" "Number of trials") ///
+			coeflabels(`labels') ///
+			collabels("", lhs("Start year")) ///
+			not nostar nogaps noobs nonum ///
+			compress nodepvars ///
+			b(1) ///
+	
+	restore
+	
+end
+
+
+
+
+
+

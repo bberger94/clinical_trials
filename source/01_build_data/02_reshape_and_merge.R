@@ -9,6 +9,8 @@
 library(dplyr)
 library(tidyr)
 library(haven)
+library(readr)
+
 
 #To reshape trial data long to wide
 my_reshape <- function(df) {
@@ -40,7 +42,7 @@ for(longdata in ls(pattern = '*_long')){
   data_wide <- longdata %>% my_reshape %>% right_join(data_wide)
 }
 
-#Select for column order; Arrange to sort by trial_id
+#Make phase indicators; indicator of biomarker presence
 data_wide <- 
   data_wide %>%
   mutate(phase_1 = grepl('Phase 1', phase),
@@ -54,6 +56,22 @@ data_wide <-
 #'Phase Not Applicable' returns phase_N = 0 for all trial phases N
 data_wide[data_wide$phase == 'Phase not specified',grep('phase_', colnames(data_wide))] <- NA
 
+#Replace trial biomarker role indicators with false if no biomarker was used
+f <- function(x){
+  x[is.na(x)] <- FALSE
+  x
+}
+data_wide <-
+  data_wide %>%
+  mutate_at(vars(ends_with('_marker_001')), f)
+
+table(data_wide$disease_marker_001)
+
+#Same for nih funding
+data_wide$nih_yes_001[is.na(data_wide$nih_yes_001)] <- FALSE
+table(data_wide$nih_yes_001)
+
+#Make the data pretty(ish)!
 data <- 
   data_wide %>% 
   select(
@@ -67,12 +85,16 @@ data <-
     nih_funding = nih_yes_001,
     patient_count_enrollment,
     recruitment_status = recruitment_status_001,
+    disease_marker_role = disease_marker_001,
+    toxic_marker_role = toxic_marker_001,
+    therapeutic_marker_role = therapeutic_marker_001,
+    not_determined_marker_role = not_determined_marker_001,
     starts_with('indication'),
     starts_with('sponsor_company'),
     starts_with('collaborator_company'),
     starts_with('biomarker_id'),
     starts_with('biomarker_name'),
-    starts_with('biomarker_type'),
+    starts_with('biomarker_role'),
     starts_with('trial_endpoint'),
     starts_with('trial_design'),
     everything()
@@ -82,8 +104,8 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = 'Z:/clinical_trials/data/clinical_trials_07-23-17.RData', data) 
-write_csv(data, 'Z:/clinical_trials/data/clinical_trials_07-23-17.csv') 
-write_dta(data, 'Z:/clinical_trials/data/clinical_trials_07-23-17.dta', version = 12) 
+save(file = 'data/clinical_trials_07-23-17.RData', data) 
+write_csv(data, 'data/clinical_trials_07-23-17.csv') 
+write_dta(data, 'data/clinical_trials_07-23-17.dta', version = 12) 
 
 

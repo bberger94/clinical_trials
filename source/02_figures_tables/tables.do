@@ -1,6 +1,6 @@
 set more off
-local trial_data "../data/clinical_trials_07-23-17.dta"
-local trial_data_sample "../data/ct_sample.dta"
+local trial_data "data/clinical_trials_07-23-17.dta"
+local trial_data_sample "data/ct_sample.dta"
 
 /*
 use `trial_data', clear
@@ -16,17 +16,12 @@ use `trial_data_sample', clear
 **Select universe of trials
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
 
-**Replace missing nih funding with 0
-replace nih_funding = 0 if nih_funding == .
 **Recode trials with multiple phase designations
 replace phase_2 = 0 if phase_1 == 1 & phase_2 == 1
 replace phase_3 = 0 if phase_2 == 1 & phase_3 == 1
 ***verify (there should be no elements in (1,1) ) 
 table phase_1 phase_2
 table phase_2 phase_3
-
-**Biomarker roles listed as biomarker types: rename as stopgap
-rename biomarker_type_* biomarker_role_*
 
 **Generate useful variables
 ***Trial start and end years
@@ -36,25 +31,8 @@ gen year_end = year(date_end)
 ***Trial duration: throw out trials with duration less than 15 days
 gen duration = (date_end - date_start) / 30
 label variable duration "Trial duration in months"
-replace duration = . if duration <= .5
+replace duration = . if duration <= 0
 replace duration = . if duration > 1000
-
-***Indicator for biomarker role
-cap drop *_role
-gen disease_biomarker_role = 0
-gen toxic_biomarker_role = 0
-gen therapeutic_biomarker_role = 0
-gen not_determined_biomarker_role = 0
-foreach var of varlist biomarker_role_* {
-	replace `var' = lower(`var')
-	replace disease_biomarker_role = 1 if strpos(`var', "disease")
-	replace toxic_biomarker_role = 1 if strpos(`var', "toxic")
-	replace therapeutic_biomarker_role = 1 if strpos(`var', "therapeutic")
-	replace not_determined_biomarker_role = 1 if strpos(`var', "not determined") 
-}
-**Indicate any trials with biomarkers but no specified roles as "not_determined"
-replace not_determined_biomarker_role = 1 if biomarker_status == 1 & ///
-	disease_biomarker_role == 0 & toxic_biomarker_role == 0 & therapeutic_biomarker_role == 0
 
 **Label variables 
 cap label drop biomarker_label
@@ -72,12 +50,12 @@ cap label drop year_labels
 
 **Define directory for reports
 set more off
-local report_directory "../reports"
-do "02_figures_tables/tables_fns.do"
+local report_directory "reports"
+do "source/02_figures_tables/tables_fns.do"
 
 *Generate tables
 **Number of trials receiving NIH funding by presence of biomarker
-nih_bmkr_count, report_directory(`report_directory')
+nih_bmkr_count, report_directory(`report_directory') 
 
 **Percent of trials receiving NIH funding by biomarker and trial location
 nih_bmkr_us_pct, report_directory(`report_directory')
@@ -97,4 +75,6 @@ nih_means, report_directory(`report_directory')
 **Average trial duration by end year
 trial_duration, report_directory(`report_directory')
 
-
+*Yearly xtabs of funding probability by biomarker presence and phase; plot and tabulate
+nih_bmkr_yr, report_directory(`report_directory')
+nih_phase_yr, report_directory(`report_directory')

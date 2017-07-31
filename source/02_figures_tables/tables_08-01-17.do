@@ -111,7 +111,6 @@ foreach dir in `report_dir' `table_dir' `figure_dir' {
 **Load table programs
 do "source/02_figures_tables/tables_fns_edit7-30.do"
 
-
 ********************************************************************************
 ********************************************************************************
 ********************************************************************************
@@ -140,7 +139,7 @@ restore
 trial_share_withbmkr_by_phase, figure_path("`figure_dir'/02b-trial_share_withbmkr_by_phase.eps")
 
 *Figure 9a
-nih_funding_by_yr_phase, figure_path("`figure_dir'/09a-nih_funding_by_yr_phase.eps")
+nih_funding_by_yr_phase , figure_path("`figure_dir'/09a-nih_funding_by_yr_phase.eps")
 
 
 

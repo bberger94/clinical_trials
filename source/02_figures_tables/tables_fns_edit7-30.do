@@ -704,7 +704,7 @@ program define nih_funding_by_yr_phase
 	cap drop nih_times100
 	gen nih_times100 = nih_funding * 100 
 	
-	if "`title'" == "" local title "Percent of trials receiving NIH funding by Phase"				
+	if "`title'" == "" local title "Share of trials receiving NIH funding by Phase"				
 	
 	*Plot
 	quietly reg nih_times100 i.year_start##i.phase
@@ -714,8 +714,7 @@ program define nih_funding_by_yr_phase
 		xtitle("Trial Start Year") ///
 		ytitle("Share of trials receiving funding (%)") ///
 		xlabel(1995(5)2015) ///
-		ylabel(, angle(0)) ///
-		yscale(titlegap(*-30)) ///
+		ylabel(0(1)10, angle(0)) ///
 		legend(rows(1)) ///
 		noci
 		

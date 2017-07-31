@@ -26,7 +26,7 @@ my_reshape <- function(df) {
 }
 
 #Load data from 01_parse_json
-#load('data/long_data.RData')
+load('data/long_data.RData')
 
 #Initialize a tibble with only non-json columns
 data_wide <-
@@ -69,7 +69,7 @@ table(data_wide$disease_marker_001)
 
 #Same for nih funding
 data_wide$nih_funding_001[is.na(data_wide$nih_funding_001)] <- FALSE
-table(data_wide$nih_fundings_001)
+table(data_wide$nih_funding_001)
 
 #Make the data pretty(ish)!
 data <- 
@@ -94,7 +94,7 @@ data <-
     starts_with('sponsor_company'), starts_with('collaborator_company'),
     starts_with('biomarker_id'), starts_with('biomarker_name'), starts_with('biomarker_role'),
     starts_with('trial_endpoint'), starts_with('trial_design'),
-    malignant_not_specified_001,
+    starts_with('malignant_not_specified'),
     everything()
   ) %>%
   mutate(date_start = as.Date(date_start),
@@ -102,8 +102,8 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = 'data/clinical_trials_07-23-17.RData', data) 
-write_csv(data, 'data/clinical_trials_07-23-17.csv') 
-write_dta(data, 'data/clinical_trials_07-23-17.dta', version = 12) 
+save(file = 'data/clinical_trials_07-29-17.RData', data) 
+write_csv(data, 'data/clinical_trials_07-29-17.csv') 
+write_dta(data, 'data/clinical_trials_07-29-17.dta', version = 12) 
 
 

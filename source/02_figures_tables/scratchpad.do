@@ -48,7 +48,7 @@ restore
 
 *Count of registered trials by phase
 preserve
-keep if year_start >= 1990 & year_start <= 2016
+keep if year_start >= 1995 & year_start <= 2016
 collapse (sum) phase_1 phase_2 phase_3, by(year_start) 
 
 graph bar phase_*, 	over(year_start, label(angle(300))) ///

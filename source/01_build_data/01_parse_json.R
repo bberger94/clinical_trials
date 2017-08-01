@@ -129,31 +129,6 @@ icd9_long <-
   left_join(icd9_xwalk, by = c('indication_name' = 'cortellis_condition')) %>% 
   select(trial_id, starts_with('icd9'), malignant_not_specified)
 
-#Biomarkers
-biomarkers_long <- 
-  trials %>% 
-  my_expand(trial_id, BiomarkerNames) %>% 
-  rename(biomarker_id = `@id`,
-         biomarker_role = `@type`,
-         biomarker_name = `$`
-         ) %>% 
-  mutate(disease_marker = grepl('disease', tolower(biomarker_role)),
-         toxic_marker = grepl('toxic', tolower(biomarker_role)),
-         therapeutic_marker = grepl('therapeutic', tolower(biomarker_role)),
-         not_determined_marker = grepl('not determined', tolower(biomarker_role)),
-         not_determined_marker = not_determined_marker | (!disease_marker & !toxic_marker & !therapeutic_marker)
-         )
-trial_biomarkers_long <- 
-  biomarkers_long %>% 
-  group_by(trial_id) %>% 
-  summarize(disease_marker = any(disease_marker),
-            toxic_marker = any(toxic_marker),
-            therapeutic_marker = any(therapeutic_marker),
-            not_determined_marker = any(not_determined_marker)
-            )
-biomarkers_long <-
-  biomarkers_long %>% 
-  select(-ends_with('_marker'))
 
 #Trial Identifiers and NIH funding
 identifiers_long <-
@@ -205,5 +180,81 @@ us_trials_long <-
   ungroup %>% group_by(trial_id) %>% 
   summarize(us_trial = any(us_trial))
 
-save.image(file = 'data/long_data.RData')
+
+################################
+#Load Trial biomarkers
+trial_biomarkers <- 
+  trials %>% 
+  my_expand(trial_id, BiomarkerNames) %>% 
+  rename(biomarker_id = `@id`,
+         biomarker_role = `@type`,
+         biomarker_name = `$`
+  ) %>% 
+  mutate(disease_marker = grepl('disease', tolower(biomarker_role)),
+         toxic_marker = grepl('toxic', tolower(biomarker_role)),
+         therapeutic_marker = grepl('therapeutic', tolower(biomarker_role)),
+         not_determined_marker = grepl('not determined', tolower(biomarker_role)),
+         not_determined_marker = not_determined_marker | (!disease_marker & !toxic_marker & !therapeutic_marker)
+  )
+
+#Load detailed biomarker role data
+biomarker_uses <- read_csv('data/July 31 Update/biomarker_uses.csv') 
+roles <- 
+  biomarker_uses %>% 
+  select(biomarker_use_id,
+         biomarker_id,
+         ci_indication_id,
+         biomarker,
+         detailed_role = role
+         ) %>% 
+  group_by(biomarker_id, ci_indication_id) %>% 
+  summarize(selection_for_therapy =          any(detailed_role == 'Selection for Therapy'), 
+            predicting_treatment_efficacy =  any(detailed_role == 'Predicting Treatment Efficacy'), 
+            predicting_treatment_toxicity =  any(detailed_role == 'Predicting Treatment Toxicity'), 
+            disease_profiling =              any(detailed_role == 'Disease Profiling'), 
+            differential_diagnosis =         any(detailed_role == 'Differential Diagnosis')
+  ) %>% 
+  arrange(biomarker_id, ci_indication_id)
+
+#Join biomarkers and indications, then match detailed role data to both
+biomarkers_indications <- 
+  trial_biomarkers %>% 
+  left_join(indications_long, by = 'trial_id') %>% 
+  mutate(indication_id = as.numeric(indication_id),
+         biomarker_id = as.numeric(biomarker_id)) %>% 
+  left_join(roles, by = c('biomarker_id', 'indication_id' = 'ci_indication_id')) %>% 
+  select(trial_id, indication_id, biomarker_id,  everything() ) 
+
+#Match biomarker type data
+biomarker_types <- read_csv('data/July 31 Update/biomarkers.csv')
+types <- 
+  biomarker_types %>%
+  my_expand(id, BiomarkerTypes) %>% 
+  rename(biomarker_id = id,
+         biomarker_type = `~BiomarkerTypes`) %>% 
+  arrange(biomarker_id)
+#To reshape biomarker types long to wide 
+reshape_types <- function(df) {
+  df %>% 
+    group_by(biomarker_id) %>% 
+    mutate(i = 1:n()) %>% 
+    mutate(i = as.character(sprintf("%03d", i))) %>% 
+    ungroup %>% 
+    select(biomarker_id, everything()) %>% 
+    gather(key, value, -c(i, biomarker_id)) %>% 
+    unite(key_i, c(key, i)) %>% 
+    spread(key_i, value)
+}
+types <- reshape_types(types)
+
+biomarker_data <-
+  biomarkers_indications %>%
+  left_join(types, by = 'biomarker_id')
+
+# save(file = 'data/biomarker_data_08-01-17.RData', biomarker_data) 
+# write_csv(biomarker_data, 'data/biomarker_data_08-01-17.csv') 
+# write_dta(biomarker_data, 'data/biomarker_data_08-01-17.dta', version = 12) 
+
+#save.image(file = 'data/long_data.RData')
+
 

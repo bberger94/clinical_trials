@@ -26,7 +26,7 @@ my_reshape <- function(df) {
 }
 
 #Load data from 01_parse_json
-load('data/long_data.RData')
+#load('data/long_data.RData')
 
 #Initialize a tibble with only non-json columns
 data_wide <-
@@ -57,15 +57,15 @@ data_wide <-
 data_wide[data_wide$phase == 'Phase not specified',grep('phase_', colnames(data_wide))] <- NA
 
 #Replace trial biomarker role indicators with false if no biomarker was used
-f <- function(x){
-  x[is.na(x)] <- FALSE
-  x
-}
-data_wide <-
-  data_wide %>%
-  mutate_at(vars(ends_with('_marker_001')), f)
+# f <- function(x){
+#   x[is.na(x)] <- FALSE
+#   x
+# }
+# data_wide <-
+#   data_wide %>%
+#   mutate_at(vars(ends_with('_marker_001')), f)
 
-table(data_wide$disease_marker_001)
+# table(data_wide$disease_marker_001)
 
 #Same for nih funding
 data_wide$nih_funding_001[is.na(data_wide$nih_funding_001)] <- FALSE
@@ -85,14 +85,14 @@ data <-
     nih_funding = nih_funding_001,
     patient_count_enrollment,
     recruitment_status = recruitment_status_001,
-    disease_marker_role = disease_marker_001,
-    toxic_marker_role = toxic_marker_001,
-    therapeutic_marker_role = therapeutic_marker_001,
-    not_determined_marker_role = not_determined_marker_001,
+    # disease_marker_role = disease_marker_001,
+    # toxic_marker_role = toxic_marker_001,
+    # therapeutic_marker_role = therapeutic_marker_001,
+    # not_determined_marker_role = not_determined_marker_001,
     starts_with('indication'),
     starts_with('icd9'), 
     starts_with('sponsor_company'), starts_with('collaborator_company'),
-    starts_with('biomarker_id'), starts_with('biomarker_name'), starts_with('biomarker_role'),
+    #starts_with('biomarker_id'), starts_with('biomarker_name'), starts_with('biomarker_role'),
     starts_with('trial_endpoint'), starts_with('trial_design'),
     starts_with('malignant_not_specified'),
     everything()
@@ -102,8 +102,8 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = 'data/clinical_trials_07-29-17.RData', data) 
-write_csv(data, 'data/clinical_trials_07-29-17.csv') 
-write_dta(data, 'data/clinical_trials_07-29-17.dta', version = 12) 
+save(file = 'data/clinical_trials_08-01-17.RData', data) 
+write_csv(data, 'data/clinical_trials_08-01-17.csv') 
+write_dta(data, 'data/clinical_trials_08-01-17.dta', version = 12) 
 
 

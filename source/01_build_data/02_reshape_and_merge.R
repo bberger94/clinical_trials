@@ -49,7 +49,7 @@ data_wide <-
          phase_2 = grepl('Phase 2', phase),
          phase_3 = grepl('Phase 3', phase),
          phase_4 = grepl('Phase 4', phase),
-         biomarker_status = !is.na(biomarker_id_001)
+         #biomarker_status = !is.na(biomarker_id_001)
          ) 
 
 #Replace phase_N columns with NA if phase is not specified 
@@ -80,7 +80,7 @@ data <-
     date_end = date_end_001,
     date_end_type = date_end_type_001,
     starts_with('phase'),
-    biomarker_status, 
+    #biomarker_status, 
     us_trial = us_trial_001,
     nih_funding = nih_funding_001,
     patient_count_enrollment,

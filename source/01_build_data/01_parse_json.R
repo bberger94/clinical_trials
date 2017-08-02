@@ -208,13 +208,18 @@ roles <-
          detailed_role = role
          ) %>% 
   group_by(biomarker_id, ci_indication_id) %>% 
-  summarize(selection_for_therapy =          any(detailed_role == 'Selection for Therapy'), 
-            predicting_treatment_efficacy =  any(detailed_role == 'Predicting Treatment Efficacy'), 
-            predicting_treatment_toxicity =  any(detailed_role == 'Predicting Treatment Toxicity'), 
-            disease_profiling =              any(detailed_role == 'Disease Profiling'), 
-            differential_diagnosis =         any(detailed_role == 'Differential Diagnosis')
-  ) %>% 
+  summarize(diagnosis_detailed_role =                any(detailed_role == 'Diagnosis'), 
+            differential_diagnosis_detailed_role =   any(detailed_role == 'Differential Diagnosis'), 
+            predicting_drug_resistance_detailed_role =   any(detailed_role == 'Predicting Drug Resistance'), 
+            predicting_treatment_efficacy_detailed_role =   any(detailed_role == 'Predicting Treatment Efficacy'),
+            predicting_treatment_toxicity_detailed_role =   any(detailed_role == 'Predicting Treatment Toxicity'),
+            screening_detailed_role =   any(detailed_role == 'Screening'), 
+            selection_for_therapy =   any(detailed_role == 'Selection for Therapy')
+            ) %>% 
   arrange(biomarker_id, ci_indication_id)
+
+
+1) diagnosis, 2) differential diagnosis, 3) predicting drug resistance, 4) predicting treatment efficacy, 5) predicting treatment toxicity, 6) screening, 7) selection for therapy
 
 #Join biomarkers and indications, then match detailed role data to both
 biomarkers_indications <- 

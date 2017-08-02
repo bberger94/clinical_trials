@@ -56,6 +56,8 @@ rename therapeutic_marker therapeutic_marker_role
 rename toxic_marker toxic_marker_role
 rename not_determined_marker not_determined_marker_role
 
+rename screening_detail_drole screening_drole
+
 cap gen anthropomorphic_type  = 0
 cap gen biochemical_type = 0
 cap gen cellular_type = 0
@@ -74,23 +76,45 @@ foreach var of varlist biomarker_type_* {
 	replace structural_type = 1 if `var' == "Structural (imaging)"
 }
 
-cap drop ppm
-gen ppm = .
-replace ppm = 	(proteomic_type == 1 | genomic_type == 1) & ///
+**Generate PPM variables
+cap drop g_ppm r_ppm
+gen g_ppm = .
+replace g_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
 		disease_marker_role == 1 & ///
-		(selection_for_therapy == 1 | ///
-		 predicting_treatment_efficacy == 1 | ///
-		 predicting_treatment_toxicity == 1 | ///
-		 disease_profiling == 1 | ///
-		 differential_diagnosis == 1)
-	
+		(diagnosis_drole             == 1 | ///
+		 diff_diagnosis_drole        == 1 | ///
+		 predict_resistance_drole    == 1 | ///
+		 predict_efficacy_drole      == 1 | ///
+		 predict_toxicity_drole      == 1 | ///
+		 screening_drole             == 1 | ///
+		 selection_for_therapy_drole == 1   ///
+		 )
+
+gen r_ppm = .
+replace r_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
+		disease_marker_role == 1 & ///
+		(predict_resistance_drole    == 1 | ///
+		 predict_efficacy_drole      == 1 | ///
+		 predict_toxicity_drole      == 1  ///
+		 )
+ 
+
+/*
+**Collapse PPM and roles/types
+*Returns 1 for PPM if any biomarker x indications 
+within a trial match PPM criteria  
+
+*Returns 1 for a detailed role role if any biomarkers
+within a trial may be used for that role with an indication in the trial
+
+*Returns 1 for a type if any biomarkers within a trial have that type
+
+*Returns 1 for a coarse role (ie. disease_marker_role) 
+if any biomarkers within a trial have that role
+*/
+
 drop biomarker_role
-local collapse_vars ppm *_type  *_role ///
-		selection_for_therapy ///
-		predicting_treatment_efficacy ///
-		predicting_treatment_toxicity ///
-		disease_profiling ///
-		differential_diagnosis
+local collapse_vars *_ppm  *_drole  *_type  *_role
 		
 collapse (max) 	`collapse_vars' , ///
 		by(trial_id)
@@ -145,18 +169,39 @@ cap label drop year_labels
 
 **Label variables
 label variable biomarker_status "Uses biomarker" 
+
 label variable phase_1 "Phase 1 Clinical"
 label variable phase_2 "Phase 2 Clinical"
 label variable phase_3 "Phase 3 Clinical"
+
 label variable nih_funding "Received NIH funding" 
 label variable us_trial "Trial site in US" 
 label variable neoplasm "Drug indication for neoplasm"
+
+label variable g_ppm "Generous PPM" 
+label variable r_ppm "Restrictive PPM" 
+
+*Coarse Roles
 label variable therapeutic_marker_role "Biomarker role: therapeutic effect"
 label variable disease_marker_role "Biomarker role: disease"
 label variable toxic_marker_role "Biomarker role: toxic effect"
 label variable not_determined_marker_role "Biomarker role: not determined"
-label variable ppm "Precision medicine"
-
+*Fine Roles
+label variable diagnosis_drole   	    "Biomarker role (detailed): diagnosis"
+label variable diff_diagnosis_drole         "Biomarker role (detailed): differential diagnosis"
+label variable predict_resistance_drole     "Biomarker role (detailed): predicting drug resistance"
+label variable predict_efficacy_drole       "Biomarker role (detailed): predicting treatment efficacy"
+label variable predict_toxicity_drole       "Biomarker role (detailed): predicting treatment toxicity"
+label variable screening_drole              "Biomarker role (detailed): screening"
+label variable selection_for_therapy_drole  "Biomarker role (detailed): selection for therapy"
+*Biomarker Types
+label variable anthropomorphic_type	"Biomarker type: anthropomorphic"
+label variable biochemical_type 	"Biomarker type: biochemical"
+label variable cellular_type 		"Biomarker type: cellular" 
+label variable genomic_type 		"Biomarker type: genomic"
+label variable physiological_type 	"Biomarker type: physiological"
+label variable proteomic_type 		"Biomarker type: proteomic"
+label variable structural_type 		"Biomarker type: structural (imaging)"
 
 
 ***************************************************
@@ -166,4 +211,20 @@ keep if year_start >= 1995 & year_start <= 2016
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
 
 save "data/processed.dta", replace
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

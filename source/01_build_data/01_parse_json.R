@@ -208,18 +208,15 @@ roles <-
          detailed_role = role
          ) %>% 
   group_by(biomarker_id, ci_indication_id) %>% 
-  summarize(diagnosis_detailed_role =                any(detailed_role == 'Diagnosis'), 
-            differential_diagnosis_detailed_role =   any(detailed_role == 'Differential Diagnosis'), 
-            predicting_drug_resistance_detailed_role =   any(detailed_role == 'Predicting Drug Resistance'), 
-            predicting_treatment_efficacy_detailed_role =   any(detailed_role == 'Predicting Treatment Efficacy'),
-            predicting_treatment_toxicity_detailed_role =   any(detailed_role == 'Predicting Treatment Toxicity'),
-            screening_detailed_role =   any(detailed_role == 'Screening'), 
-            selection_for_therapy =   any(detailed_role == 'Selection for Therapy')
+  summarize(diagnosis_drole =                any(detailed_role == 'Diagnosis'), 
+            diff_diagnosis_drole =   any(detailed_role == 'Differential Diagnosis'), 
+            predict_resistance_drole =   any(detailed_role == 'Predicting Drug Resistance'), 
+            predict_efficacy_drole =   any(detailed_role == 'Predicting Treatment Efficacy'),
+            predict_toxicity_drole =   any(detailed_role == 'Predicting Treatment Toxicity'),
+            screening_detail_drole =   any(detailed_role == 'Screening'), 
+            selection_for_therapy_drole =   any(detailed_role == 'Selection for Therapy')
             ) %>% 
   arrange(biomarker_id, ci_indication_id)
-
-
-1) diagnosis, 2) differential diagnosis, 3) predicting drug resistance, 4) predicting treatment efficacy, 5) predicting treatment toxicity, 6) screening, 7) selection for therapy
 
 #Join biomarkers and indications, then match detailed role data to both
 biomarkers_indications <- 
@@ -256,9 +253,9 @@ biomarker_data <-
   biomarkers_indications %>%
   left_join(types, by = 'biomarker_id')
 
-# save(file = 'data/biomarker_data_08-01-17.RData', biomarker_data) 
-# write_csv(biomarker_data, 'data/biomarker_data_08-01-17.csv') 
-# write_dta(biomarker_data, 'data/biomarker_data_08-01-17.dta', version = 12) 
+save(file = 'data/biomarker_data_08-01-17.RData', biomarker_data)
+write_csv(biomarker_data, 'data/biomarker_data_08-01-17.csv')
+write_dta(biomarker_data, 'data/biomarker_data_08-01-17.dta', version = 12)
 
 #save.image(file = 'data/long_data.RData')
 

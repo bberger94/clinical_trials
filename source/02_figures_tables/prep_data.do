@@ -162,11 +162,12 @@ cap label drop biomarker_label
 cap label drop nih_label
 	label define nih_label 0 "No funding" 1 "NIH funding"
 	label values nih_funding nih_label
+/*
 cap label drop year_labels
 	label define year_labels 1995 1995
 	label values year_start year_labels
 	label values year_end year_labels
-
+*/
 **Label variables
 label variable biomarker_status "Uses biomarker" 
 

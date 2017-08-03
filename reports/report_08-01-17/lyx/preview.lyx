@@ -27,6 +27,7 @@
 \bibtex_command default
 \index_command default
 \paperfontsize default
+\spacing single
 \use_hyperref false
 \papersize default
 \use_geometry false
@@ -45,7 +46,7 @@
 \biblio_style plain
 \use_bibtopic false
 \use_indices false
-\paperorientation portrait
+\paperorientation landscape
 \suppress_date false
 \justification true
 \use_refstyle 1
@@ -74,6 +75,136 @@
 \begin_inset CommandInset include
 LatexCommand input
 filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/01-summary_stats.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/02-bmkrtype_count.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/03-bmkrdrole_count.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/04a-ppm_count_and_share.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/04b-ppm_count_and_share.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/05a-ppm_count_and_share_cancer.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/05b-ppm_count_and_share_cancer.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/06a-ppm_count_and_share_noncancer.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/06b-ppm_count_and_share_cancer.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/07a-ppm_count_and_share_us.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/07b-ppm_count_and_share_us.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/08a-ppm_count_and_share_non-us.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/08b-ppm_count_and_share_non-us.tex"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "/disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/report_08-01-17/tables/09-nih_funding_by_ppm_and_phase.tex"
 
 \end_inset
 

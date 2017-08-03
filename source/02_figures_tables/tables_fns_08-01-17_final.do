@@ -19,10 +19,7 @@ end
 
 
 
-
-
-
-**MAIN TABLE & FIGURE FUNCTIONS**
+**MAIN TABLE FUNCTIONS**
 **Variable means
 cap program drop summary_stats
 program define summary_stats
@@ -260,6 +257,7 @@ end
 **********************************************************************************************
 **********************************************************************************************
 
+/*
 *Trial count by phase
 cap program drop trial_count_by_phase
 program define trial_count_by_phase

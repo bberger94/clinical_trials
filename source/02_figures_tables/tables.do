@@ -1,80 +1,175 @@
+***********************************************************
+** Author: Ben Berger; Date Created: 7-30-17              
+** This script:
+** 1. Runs programs to generate tables
+***********************************************************
+
 set more off
-local trial_data "data/clinical_trials_07-23-17.dta"
-local trial_data_sample "data/ct_sample.dta"
+use "data/processed.dta", clear
+sample 10
 
-/*
-use `trial_data', clear
-**Write a sample to disk for testing code
-set seed 101
-sample 10 
-save `trial_data_sample', replace
-*/
-
-use `trial_data_sample', clear
-//use `trial_data', clear
-
-**Select universe of trials
-keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
-
-**Recode trials with multiple phase designations
-replace phase_2 = 0 if phase_1 == 1 & phase_2 == 1
-replace phase_3 = 0 if phase_2 == 1 & phase_3 == 1
-***verify (there should be no elements in (1,1) ) 
-table phase_1 phase_2
-table phase_2 phase_3
-
-**Generate useful variables
-***Trial start and end years
-gen year_start = year(date_start)
-gen year_end = year(date_end)
-
-***Trial duration: throw out trials with duration less than 15 days
-gen duration = (date_end - date_start) / 30
-label variable duration "Trial duration in months"
-replace duration = . if duration <= 0
-replace duration = . if duration > 1000
-
-**Label variables 
-cap label drop biomarker_label
-	label define biomarker_label 0 "No biomarker" 1 "Biomarker"
-	label values biomarker_status biomarker_label
-cap label drop nih_label
-	label define nih_label 0 "No funding" 1 "NIH funding"
-	label values nih_funding nih_label
-cap label drop year_labels
-	label define year_labels 1995 1995
-	label values year_start year_labels
-	label values year_end year_labels
-
-
+***************************************************
+**** Generate figures and tables ******************
+***************************************************
 
 **Define directory for reports
 set more off
-local report_directory "reports"
+local report_dir "reports/report_08-08-17"
+local table_dir "`report_dir'/tables"
+
+foreach dir in `report_dir' `table_dir' `figure_dir' {
+	!mkdir "`dir'"
+}
+
+**Load table programs
 do "source/02_figures_tables/tables_fns.do"
 
-*Generate tables
-**Number of trials receiving NIH funding by presence of biomarker
-nih_bmkr_count, report_directory(`report_directory') 
+********************************************************************************
+********************************************************************************
+********************************************************************************
+********************************************************************************
+*Table 1
+summary_stats, table_path("`table_dir'/01-summary_stats.tex")
+*Table 2
+bmkrtype_count, table_path("`table_dir'/02-bmkrtype_count.tex")
+*Table 3
+bmkrdrole_count, table_path("`table_dir'/03-bmkrdrole_count.tex")
+*Table 4
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition") 		///
+			table_path("`table_dir'/04a-ppm_count_and_share.tex") 
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition") 		///
+			table_path("`table_dir'/04b-ppm_count_and_share.tex") 
 
-**Percent of trials receiving NIH funding by biomarker and trial location
-nih_bmkr_us_pct, report_directory(`report_directory')
+*Table 5
+preserve
+keep if neoplasm == 1
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition"		///
+				"for drugs with cancer indications") 			///
+			table_path("`table_dir'/05a-ppm_count_and_share_cancer.tex") 
+				
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition" 		///
+				"for drugs with cancer indications") 			///
+			table_path("`table_dir'/05b-ppm_count_and_share_cancer.tex") 
+restore
 
-**Percent of trials receiving NIH funding by biomarker and phase
-nih_bmkr_phase_pct, report_directory(`report_directory')
+*Table 6
+preserve
+keep if neoplasm == 0
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition" 		///
+				"for drugs without cancer indications") 		///
+			table_path("`table_dir'/06a-ppm_count_and_share_noncancer.tex") 
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition" 		///
+				"for drugs without cancer indications") 		///
+			table_path("`table_dir'/06b-ppm_count_and_share_cancer.tex") 
+restore
 
-**Percent of trials receiving NIH funding by biomarker role
-nih_bmkrrole, report_directory(`report_directory')
+*Table 7
+preserve
+keep if us_trial == 1
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition" 		///
+				"for trials located in US" ) 				///
+			table_path("`table_dir'/07a-ppm_count_and_share_us.tex") 
+			
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition"		///
+				"for trials located in US")				/// 
+			table_path("`table_dir'/07b-ppm_count_and_share_us.tex") 
+restore
 
-**Count of trials by phase
-trial_phase, report_directory(`report_directory')
+*Table 8
+preserve
+keep if us_trial == 0
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition" 		///
+				"for trials located outside US") 			///
+			table_path("`table_dir'/08a-ppm_count_and_share_non-us.tex") 
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"Potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition" 		///
+				"for trials located outside US") 			///
+			table_path("`table_dir'/08b-ppm_count_and_share_non-us.tex") 				
+restore
 
-**Averages of select variables
-nih_means, report_directory(`report_directory')
+*Table 9
+nih_funding_by_ppm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	///
+					"Generous precision medicine definition" )	///
+				table_path("`table_dir'/09-nih_funding_by_ppm_and_phase.tex") 
+				
 
-**Average trial duration by end year
-trial_duration, report_directory(`report_directory')
 
-*Yearly xtabs of funding probability by biomarker presence and phase; plot and tabulate
-nih_bmkr_yr, report_directory(`report_directory')
-nih_phase_yr, report_directory(`report_directory')
+/*
+**Run programs to generate tables/figures
+*Table 1
+summary_stats, table_path("`table_dir'/01-summary_stats.tex")
+
+*Table 9 
+nih_funding_by_phase, table_path("`table_dir'/09-nih_funding_by_phase.tex")
+
+*Figure 1a
+trial_count_by_phase, figure_path("`figure_dir'/01a-trial_count_by_phase.eps")
+*Figure 1b
+trial_growth_by_phase, figure_path("`figure_dir'/01b-trial_growth_by_phase.eps")
+
+*Figure 2a
+preserve
+keep if biomarker_status == 1
+trial_count_by_phase, ///
+	figure_path("`figure_dir'/02a-trial_count_by_phase_withbmkr.eps") ///
+	title("Number of registered Phase I-III trials using biomarkers (1995-2016)")
+restore
+*Figure 2b
+trial_share_withbmkr_by_phase, figure_path("`figure_dir'/02b-trial_share_withbmkr_by_phase.eps")
+
+*Figure 9a
+nih_funding_by_yr_phase , figure_path("`figure_dir'/09a-nih_funding_by_yr_phase.eps")
+
+
+
+
+
+
+/*
+nih_funding_by_bmkr, 		table_path("`table_dir'/01-nih_funding_by_bmkr.tex")
+nih_funding_by_bmkr_us, 	table_path("`table_dir'/fragment-02-nih_funding_by_bmkr_us.tex")
+nih_funding_by_bmkr_phase, 	table_path("`table_dir'/fragment-03-nih_funding_by_bmkr_phase.tex")
+nih_funding_by_bmkrrole, 	table_path("`table_dir'/04-nih_funding_by_bmkrrole.tex")
+trial_phase, 			table_path("`table_dir'/05-trial_phase.tex")
+trial_duration_by_yr, 		table_path("`table_dir'/06-trial_duration_by_yr.tex") ///
+					figure_path("`figure_dir'/06-trial_duration_by_yr.eps")
+nih_funding_means, 		table_path("`table_dir'/07-nih_funding_means.tex")
+trial_duration_by_yr_phase, 	figure_path("`figure_dir'/05-trial_duration_by_yr_phase.eps")
+trial_duration_by_yr_bmkr, 	table_path("`table_dir'/11-trial_duration_by_yr_bmkr.tex") ///
+					figure_path("`figure_dir'/04-trial_duration_by_yr_bmkr.eps")
+nih_funding_by_yr_bmkr, 	table_path("`table_dir'/08-nih_funding_by_yr_bmkr.tex") ///
+					figure_path("`figure_dir'/01-nih_funding_by_yr_bmkr.eps")
+
+preserve
+keep if us_trial == 1					
+nih_funding_by_yr_bmkr, 	table_path("`table_dir'/09-nih_funding_by_yr_bmkr_us.tex") ///
+					figure_path("`figure_dir'/02-nih_funding_by_yr_bmkr_us.eps")					
+restore
+					
+nih_funding_by_yr_phase, 	table_path("`table_dir'/10-nih_funding_by_yr_phase.tex") ///
+					figure_path("`figure_dir'/03-nih_funding_by_yr_phase.eps")
+
+
+
+
+
+

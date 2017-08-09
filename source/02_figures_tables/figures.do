@@ -280,14 +280,30 @@ restore
 /* *Generate Appendix Figures* */
  *******************************
 
+**Define directory for reports
+set more off
+local report_dir "reports/report_08-08-17"
+local figure_dir "`report_dir'/figures"
+
+foreach dir in `report_dir' `table_dir' `figure_dir' {
+	!mkdir "`dir'"
+}
+
+**Load figure programs
+do "source/02_figures_tables/figures_fns.do"
+
+
+
 *Figure 1
 preserve
 keep if us_trial == 1
 *1a
 trial_count_by_phase, 	title("Number of registered Phase I-III US trials (1995-2016)") ///
+			ylabel("ylabel(0(1000)4000, angle(0))") ///
 			figure_path("`figure_dir'/A01a-trial_count_by_phase_us.eps")
 *1b 
 trial_growth_by_phase, 	title("Growth in number of registered Phase I-III US trials since 1995") ///
+			ylabel("ylabel(0(1000)9000, angle(0))") ///
 			figure_path("`figure_dir'/A01b-trial_growth_by_phase_us.eps")
 restore
 
@@ -295,10 +311,12 @@ preserve
 keep if us_trial == 0
 *1c
 trial_count_by_phase, 	title("Number of registered Phase I-III non-US trials (1995-2016)") ///
+			ylabel("ylabel(0(1000)4000, angle(0))") ///
 			figure_path("`figure_dir'/A01c-trial_count_by_phase_non-us.eps")
 *1d 
 trial_growth_by_phase, 	title("Growth in number of registered Phase I-III non-US trials since 1995") ///
-			figure_path("`figure_dir'/A01b-trial_growth_by_phase_non-us.eps")
+			ylabel("ylabel(0(1000)9000, angle(0))") ///
+			figure_path("`figure_dir'/A01d-trial_growth_by_phase_non-us.eps")
 restore
 
 *Figure 2
@@ -322,7 +340,7 @@ restore
 preserve
 keep if g_ppm == 1 & us_trial == 1
 trial_count_by_phase, title("Number of registered US PPM (generous definition) trials by phase") ///
-			ylabel("ylabel(0(100)500, angle(0))") ///
+			ylabel("ylabel(0(50)250, angle(0))") ///
 			figure_path("`figure_dir'/A03a-g_ppm_count_by_phase_us.eps")
 restore
 *3b
@@ -330,7 +348,7 @@ preserve
 keep if us_trial == 1
 trial_share_by_phase, var(g_ppm) ///
 			title("Share of US trials with PPM biomarkers (generous definition)") ///
-			ylabel("ylabel(0(1)12, angle(0))") ///
+			ylabel("ylabel(0(2)20, angle(0))") ///
 			figure_path("`figure_dir'/A03b-g_ppm_share_by_phase_us.eps")
 restore
 
@@ -338,7 +356,7 @@ restore
 preserve
 keep if r_ppm == 1 & us_trial == 1
 trial_count_by_phase, title("Number of registered US PPM (restrictive definition) trials by phase") ///
-			ylabel("ylabel(0(100)500, angle(0))") ///
+			ylabel("ylabel(0(50)250, angle(0))") ///
 			figure_path("`figure_dir'/A03c-r_ppm_count_by_phase_us.eps") 
 restore
 *3d
@@ -346,7 +364,7 @@ preserve
 keep if us_trial == 1
 trial_share_by_phase, var(r_ppm) ///
 			title("Share of US trials with PPM biomarkers (restrictive definition)") ///
-			ylabel("ylabel(0(1)12, angle(0))") ///
+			ylabel("ylabel(0(2)20, angle(0))") ///
 			figure_path("`figure_dir'/A03d-r_ppm_share_by_phase_us.eps")
 restore
 *Figure 4
@@ -400,6 +418,7 @@ restore
 preserve
 keep if g_ppm == 1 & neoplasm == 1 & us_trial == 1
 trial_count_by_phase, title("Number of registered US PPM (generous definition) trials by phase: cancer trials") ///
+			ylabel("ylabel(0(50)250, angle(0))") ///
 			figure_path("`figure_dir'/A05a-g_ppm_count_by_phase_cancer_us.eps")
 restore
 *5b
@@ -407,13 +426,14 @@ preserve
 keep if neoplasm == 1 & us_trial == 1
 trial_share_by_phase, var(g_ppm) ///
 			title("Share of US cancer drug trials with PPM biomarkers (generous definition)") ///
-			ylabel("ylabel(0(5)50, angle(0))") ///
+			ylabel("ylabel(0(5)60, angle(0))") ///
 			figure_path("`figure_dir'/A05b-g_ppm_share_by_phase_cancer_us.eps")
 restore
 *5c
 preserve
 keep if r_ppm == 1 & neoplasm == 1 & us_trial == 1
 trial_count_by_phase, title("Number of registered US PPM (restrictive definition) trials by phase: cancer trials") ///
+			ylabel("ylabel(0(50)250, angle(0))") ///
 			figure_path("`figure_dir'/A05c-r_ppm_count_by_phase_cancer_us.eps")
 
 restore
@@ -422,7 +442,7 @@ preserve
 keep if neoplasm == 1 & us_trial == 1
 trial_share_by_phase, var(r_ppm) ///
 			title("Share of US cancer drug trials with PPM biomarkers (restrictive definition)") ///
-			ylabel("ylabel(0(5)50, angle(0))") ///
+			ylabel("ylabel(0(5)60, angle(0))") ///
 			figure_path("`figure_dir'/A05d-r_ppm_share_by_phase_cancer_us.eps")
 restore
 
@@ -431,6 +451,7 @@ restore
 preserve
 keep if g_ppm == 1 & neoplasm == 0 & us_trial == 1
 trial_count_by_phase, title("Number of registered US PPM (generous definition) trials by phase: non-cancer trials") ///
+			ylabel("ylabel(0(20)100, angle(0))") ///
 			figure_path("`figure_dir'/A06a-g_ppm_count_by_phase_noncancer_us.eps")
 restore
 *6b
@@ -438,7 +459,7 @@ preserve
 keep if neoplasm == 0 & us_trial == 1
 trial_share_by_phase, var(g_ppm) ///
 			title("Share of US non-cancer drug trials with PPM biomarkers (generous definition)") ///
-			ylabel("ylabel(0(.5)3, angle(0))") ///
+			ylabel("ylabel(0(.5)5, angle(0))") ///
 			figure_path("`figure_dir'/A06b-g_ppm_share_by_phase_noncancer_us.eps")
 restore
 *6c
@@ -455,7 +476,7 @@ preserve
 keep if neoplasm == 0 & us_trial == 1
 trial_share_by_phase, var(r_ppm) ///
 			title("Share of US non-cancer drug trials with PPM biomarkers (restrictive definition)") ///
-			ylabel("ylabel(0(.5)3, angle(0))") ///
+			ylabel("ylabel(0(.5)5, angle(0))") ///
 			figure_path("`figure_dir'/A06d-r_ppm_share_by_phase_noncancer_us.eps")
 
 restore

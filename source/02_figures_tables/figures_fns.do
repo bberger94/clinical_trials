@@ -56,7 +56,9 @@ cap program drop trial_growth_by_phase
 program define trial_growth_by_phase
 	syntax, ///
 	[figure_path(string)] ///
-	[title(string)]
+	[title(string)] ///
+	[ylabel(string)]
+
 
 	preserve
 	
@@ -73,7 +75,9 @@ program define trial_growth_by_phase
 	replace `var' = 100 * (`var'/`first_year_value' - 1)
 	}
 	
+	
 	*Plot
+	if "`ylabel'" == "" local ylabel ylabel(0(200)2000, angle(0))
 	if "`title'" == "" local title "Growth in number of registered Phase I-III trials since 1995" 
 	graph twoway ///
 		line phase_1 year_start, lpattern(solid) || ///
@@ -81,7 +85,7 @@ program define trial_growth_by_phase
 		line phase_3 year_start, lpattern(dash_dot) ///
 		title("`title'", size(medium)) ///
 			ytitle("Growth (%)") ///
-			ylabel(0(200)2000,angle(0)) ///
+			`ylabel' ///
 			xtitle("Start year") ///
 			legend(	lab(1 "Phase I") ///
 				lab(2 "Phase II") ///

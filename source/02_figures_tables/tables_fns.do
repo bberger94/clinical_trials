@@ -30,21 +30,22 @@ program define summary_stats
 	preserve
 	local vars 	biomarker_status *_ppm *_role *_type *_drole ///
 			phase_1 phase_2 phase_3 ///
-			nih_funding ///
-			us_trial ///
 			neoplasm ///
+			nih_funding ///
+			us_trial 
 			
+	eststo all: quietly estpost summarize `vars'
+	eststo us: quietly estpost summarize `vars' if us_trial == 1
 
-	quietly estpost summarize `vars'
-	
 	if "`title'" == "" local title "Summary statistics for selected variables"
 	if "`table_path'" != "" local write_tex "using `table_path'"
-	
-	esttab . `write_tex', replace ///
-		cells("mean(fmt(4)) min(fmt(0)) max(fmt(0)) count(fmt(%9.0gc))") ///
+
+	esttab all us `write_tex', replace ///
+		cells("mean(fmt(4)) count(fmt(%9.0gc))") ///
 		scalars(N) ///
-		collabels("Mean" "Minimum" "Maximum" "Observations") ///
-		nomtitle nonum noobs label ///
+		collabels("Mean" "Observations") ///
+		mtitles("All trials" "US trials") ///
+		nonum noobs label ///
 		title("`title'") ///
 		sfmt(%9.0gc)
 

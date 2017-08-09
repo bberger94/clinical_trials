@@ -6,7 +6,6 @@
 
 set more off
 use "data/processed.dta", clear
-sample 10
 
 ***************************************************
 **** Generate figures and tables ******************
@@ -111,6 +110,58 @@ nih_funding_by_ppm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	
 					"Generous precision medicine definition" )	///
 				table_path("`table_dir'/09-nih_funding_by_ppm_and_phase.tex") 
 				
+
+
+ ************************************************
+/* *Generate Appendix Tables (US trials only) * */
+ ************************************************
+ 
+set more off
+local report_dir "reports/report_08-08-17"
+local table_dir "`report_dir'/tables"
+
+
+preserve
+keep if us_trial == 1
+*Table 2
+bmkrtype_count,	title("Number of US trials employing biomarkers by type") ///
+		table_path("`table_dir'/A02-bmkrtype_count_us.tex")
+*Table 3
+bmkrdrole_count,title("Number of US trials employing biomarkers by detailed role") ///
+		table_path("`table_dir'/A03-bmkrdrole_count_us.tex")
+restore
+
+*Table 5
+preserve
+keep if neoplasm == 1 & us_trial == 1
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"US potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition"		///
+				"for drugs with cancer indications") 			///
+			table_path("`table_dir'/A05a-ppm_count_and_share_cancer_us.tex") 
+				
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"US potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition" 		///
+				"for drugs with cancer indications") 			///
+			table_path("`table_dir'/A05b-ppm_count_and_share_cancer_us.tex") 
+restore
+
+*Table 6
+preserve
+keep if neoplasm == 0 & us_trial == 1
+ppm_count_and_share, 	ppm(g_ppm) 							///
+			title(	"US potential precision medicine trials (1995-2016):" 	///
+				"Generous precision medicine definition" 		///
+				"for drugs without cancer indications") 		///
+			table_path("`table_dir'/A06a-ppm_count_and_share_noncancer_us.tex") 
+ppm_count_and_share, 	ppm(r_ppm) 							///
+			title(	"US potential precision medicine trials (1995-2016):" 	///
+				"Restrictive precision medicine definition" 		///
+				"for drugs without cancer indications") 		///
+			table_path("`table_dir'/A06b-ppm_count_and_share_cancer_us.tex") 
+restore
+
 
 
 /*

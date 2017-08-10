@@ -5,7 +5,7 @@
 ***********************************************************
 
 set more off
-use "data/processed.dta", clear
+use "data/prepared_trials.dta", clear
 
 ***************************************************
 **** Generate figures and tables ******************
@@ -115,11 +115,6 @@ nih_funding_by_ppm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	
  ************************************************
 /* *Generate Appendix Tables (US trials only) * */
  ************************************************
- 
-set more off
-local report_dir "reports/report_08-08-17"
-local table_dir "`report_dir'/tables"
-
 
 preserve
 keep if us_trial == 1

@@ -5,7 +5,7 @@
 ***********************************************************
 
 set more off
-use "data/processed.dta", clear
+use "data/prepared_trials.dta", clear
 
 ***************************************************
 **** Generate figures and tables ******************
@@ -279,20 +279,6 @@ restore
  *******************************
 /* *Generate Appendix Figures* */
  *******************************
-
-**Define directory for reports
-set more off
-local report_dir "reports/report_08-08-17"
-local figure_dir "`report_dir'/figures"
-
-foreach dir in `report_dir' `table_dir' `figure_dir' {
-	!mkdir "`dir'"
-}
-
-**Load figure programs
-do "source/02_figures_tables/figures_fns.do"
-
-
 
 *Figure 1
 preserve

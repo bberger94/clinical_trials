@@ -144,7 +144,7 @@ gen year_start = year(date_start)
 gen year_end = year(date_end)
 ***Trial duration in months
 gen duration = (date_end - date_start) / 30
-label variable duration "Trial duration in months"
+lab var duration "Trial duration in months"
 ****Recode as missing if duration is less 1 day or greater than 1000 months
 replace duration = . if duration <= 0
 replace duration = . if duration > 1000
@@ -162,56 +162,67 @@ cap label drop biomarker_label
 cap label drop nih_label
 	label define nih_label 0 "No funding" 1 "NIH funding"
 	label values nih_funding nih_label
-/*
-cap label drop year_labels
-	label define year_labels 1995 1995
-	label values year_start year_labels
-	label values year_end year_labels
-*/
+
 **Label variables
-label variable biomarker_status "Uses biomarker" 
+lab var trial_id "Cortellis trial ID"
 
-label variable phase_1 "Phase 1 Clinical"
-label variable phase_2 "Phase 2 Clinical"
-label variable phase_3 "Phase 3 Clinical"
+lab var date_start "Start date"
+lab var date_end "End date"
+lab var date_end_type "Actual or estimated trial end date" 
+lab var year_start "Trial start year"
+lab var year_end "Trial end year"
 
-label variable nih_funding "Received NIH funding" 
-label variable us_trial "Trial site in US" 
-label variable neoplasm "Drug indication for neoplasm"
+lab var phase 	"Trial phase (detailed)"
+lab var phase_1 "Phase 1 Clinical (includes Phase 1/Phase 2 trials)"
+lab var phase_2 "Phase 2 Clinical (includes Phase 2/Phase 3 trials)"
+lab var phase_3 "Phase 3 Clinical"
 
-label variable g_ppm "Generous PPM" 
-label variable r_ppm "Restrictive PPM" 
+lab var patient_count_enrollment "Trial enrollment"
+lab var recruitment_status "Trial recruitment status"
+
+lab var biomarker_status "Uses biomarker" 
+lab var nih_funding "Received NIH funding" 
+lab var us_trial "Trial site in US" 
+lab var neoplasm "Drug indication for neoplasm"
+
+lab var g_ppm "Generous PPM" 
+lab var r_ppm "Restrictive PPM" 
 
 *Coarse Roles
-label variable therapeutic_marker_role "Biomarker role: therapeutic effect"
-label variable disease_marker_role "Biomarker role: disease"
-label variable toxic_marker_role "Biomarker role: toxic effect"
-label variable not_determined_marker_role "Biomarker role: not determined"
+lab var therapeutic_marker_role "Biomarker role: therapeutic effect"
+lab var disease_marker_role "Biomarker role: disease"
+lab var toxic_marker_role "Biomarker role: toxic effect"
+lab var not_determined_marker_role "Biomarker role: not determined"
 *Fine Roles
-label variable diagnosis_drole   	    "Biomarker role (detailed): diagnosis"
-label variable diff_diagnosis_drole         "Biomarker role (detailed): differential diagnosis"
-label variable predict_resistance_drole     "Biomarker role (detailed): predicting drug resistance"
-label variable predict_efficacy_drole       "Biomarker role (detailed): predicting treatment efficacy"
-label variable predict_toxicity_drole       "Biomarker role (detailed): predicting treatment toxicity"
-label variable screening_drole              "Biomarker role (detailed): screening"
-label variable selection_for_therapy_drole  "Biomarker role (detailed): selection for therapy"
+lab var diagnosis_drole   	    "Biomarker role (detailed): diagnosis"
+lab var diff_diagnosis_drole         "Biomarker role (detailed): differential diagnosis"
+lab var predict_resistance_drole     "Biomarker role (detailed): predicting drug resistance"
+lab var predict_efficacy_drole       "Biomarker role (detailed): predicting treatment efficacy"
+lab var predict_toxicity_drole       "Biomarker role (detailed): predicting treatment toxicity"
+lab var screening_drole              "Biomarker role (detailed): screening"
+lab var selection_for_therapy_drole  "Biomarker role (detailed): selection for therapy"
 *Biomarker Types
-label variable anthropomorphic_type	"Biomarker type: anthropomorphic"
-label variable biochemical_type 	"Biomarker type: biochemical"
-label variable cellular_type 		"Biomarker type: cellular" 
-label variable genomic_type 		"Biomarker type: genomic"
-label variable physiological_type 	"Biomarker type: physiological"
-label variable proteomic_type 		"Biomarker type: proteomic"
-label variable structural_type 		"Biomarker type: structural (imaging)"
+lab var anthropomorphic_type	"Biomarker type: anthropomorphic"
+lab var biochemical_type 	"Biomarker type: biochemical"
+lab var cellular_type 		"Biomarker type: cellular" 
+lab var genomic_type 		"Biomarker type: genomic"
+lab var physiological_type 	"Biomarker type: physiological"
+lab var proteomic_type 		"Biomarker type: proteomic"
+lab var structural_type 		"Biomarker type: structural (imaging)"
 
-
+order trial_id date* year* duration ///
+	phase* us_trial neoplasm nih_funding ///
+	recruitment_status patient_count_enrollment ///
+	biomarker_status *_ppm *_drole *_type *_role 
+	       
 ***************************************************
 **** Select universe of trials ********************
 ***************************************************
 keep if year_start >= 1995 & year_start <= 2016
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
+drop phase_4
 
-save "data/processed.dta", replace
+save "data/prepared_trials.dta", replace
 
 
 

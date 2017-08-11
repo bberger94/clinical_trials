@@ -160,7 +160,6 @@ foreach var of varlist icd9_chapter_* {
 /* Takes 10+ minutes
 Comment out below until the merge command 
 to read tempfile from disk      */
-
 /*
 preserve
 keep trial_id icd9_chapter_*
@@ -168,16 +167,14 @@ keep trial_id icd9_chapter_*
 *Reshape long to collapse by trial id
 reshape long icd9_chapter_ , i(trial_id) j(j) string
 
-*Get mode (most common chapter)
-bys trial_id: egen most_common_chapter = mode(icd9_chapter)
-*Collapse, taking only the first indication from each trial
-collapse (firstnm) most_common_chapter icd9_chapter_ , by(trial_id)
+/*Get mode (most common chapter) 
+* Where there is a tie, take the first */
+bys trial_id: egen most_common_chapter = mode(icd9_chapter), min
 
-/*Replace most common chapter by first indication chapter if
-there are multiple modal chapters (ie 1 indication for both) */
-replace most_common_chapter = icd9_chapter_ if most_common_chapter == ""
+*Collapse, taking the most common chapter from each trial
+collapse (firstnm) most_common_chapter  , by(trial_id)
+list in 1/20
 
-drop icd9_chapter_
 save "data/temp/icd9_modal_chapter.dta", replace
 restore
 */

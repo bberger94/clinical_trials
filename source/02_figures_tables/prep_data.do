@@ -155,6 +155,36 @@ foreach var of varlist icd9_chapter_* {
 	replace neoplasm = 1 if `var' == "Neoplasms"
 }
 
+**Most common icd-9 chapter
+//******************************//
+/* Takes 10+ minutes
+Comment out below until the merge command 
+to read tempfile from disk      */
+
+/*
+preserve
+keep trial_id icd9_chapter_*
+
+*Reshape long to collapse by trial id
+reshape long icd9_chapter_ , i(trial_id) j(j) string
+
+*Get mode (most common chapter)
+bys trial_id: egen most_common_chapter = mode(icd9_chapter)
+*Collapse, taking only the first indication from each trial
+collapse (firstnm) most_common_chapter icd9_chapter_ , by(trial_id)
+
+/*Replace most common chapter by first indication chapter if
+there are multiple modal chapters (ie 1 indication for both) */
+replace most_common_chapter = icd9_chapter_ if most_common_chapter == ""
+
+drop icd9_chapter_
+save "data/temp/icd9_modal_chapter.dta", replace
+restore
+*/
+
+merge 1:1 trial_id using "data/temp/icd9_modal_chapter.dta"
+drop _merge
+
 **Label variable values 
 cap label drop biomarker_label
 	label define biomarker_label 0 "No biomarker" 1 "Biomarker"
@@ -209,6 +239,8 @@ lab var genomic_type 		"Biomarker type: genomic"
 lab var physiological_type 	"Biomarker type: physiological"
 lab var proteomic_type 		"Biomarker type: proteomic"
 lab var structural_type 		"Biomarker type: structural (imaging)"
+
+lab var most_common_chapter 	"Most common ICD-9 chapter"
 
 order trial_id date* year* duration ///
 	phase* us_trial neoplasm nih_funding ///

@@ -12,8 +12,6 @@
 library(dplyr)
 library(rlang)
 library(readr)
-library(tidyr)
-library(haven)
 
 assert <- stopifnot
 get_name <- function(x) as.character(UQE(x))
@@ -216,19 +214,7 @@ roles <-
             predict_efficacy_drole =   any(detailed_role == 'Predicting Treatment Efficacy'),
             predict_toxicity_drole =   any(detailed_role == 'Predicting Treatment Toxicity'),
             screening_detail_drole =   any(detailed_role == 'Screening'), 
-            selection_for_therapy_drole =   any(detailed_role == 'Selection for Therapy'),
-            all_drole = any(detailed_role == 'All'),
-            disease_profiling_drole = any(detailed_role == 'Disease Profiling'),
-            monitor_progression_drole = any(detailed_role == 'Monitoring Disease Progression'),
-            monitor_efficacy_drole = any(detailed_role == 'Monitoring Treatment Efficacy'),
-            monitor_toxicity_drole = any(detailed_role == 'Monitoring Treatment Toxicity'),
-            monitor_progression_drole = any(detailed_role == 'Monitoring Disease Progression'),
-            not_determined_drole = any(detailed_role == 'Not Determined'),
-            prognosis_drole = any(detailed_role == 'Prognosis'),
-            prognosis_riskstrat_drole = any(detailed_role == 'Prognosis - Risk Stratification'),
-            risk_factor_drole = any(detailed_role == 'Risk Factor'),
-            staging_drole = any(detailed_role == 'Staging'),
-            toxicity_profiling_drole = any(detailed_role == 'Toxicity Profiling')
+            selection_for_therapy_drole =   any(detailed_role == 'Selection for Therapy')
             ) %>% 
   arrange(biomarker_id, ci_indication_id)
 
@@ -267,9 +253,9 @@ biomarker_data <-
   biomarkers_indications %>%
   left_join(types, by = 'biomarker_id')
 
-save(file = 'data/biomarker_data_08-13-17.RData', biomarker_data)
-write_csv(biomarker_data, 'data/biomarker_data_08-13-17.csv')
-write_dta(biomarker_data, 'data/biomarker_data_08-13-17.dta', version = 12)
+save(file = 'data/biomarker_data_08-01-17.RData', biomarker_data)
+write_csv(biomarker_data, 'data/biomarker_data_08-01-17.csv')
+write_dta(biomarker_data, 'data/biomarker_data_08-01-17.dta', version = 12)
 
 #save.image(file = 'data/long_data.RData')
 

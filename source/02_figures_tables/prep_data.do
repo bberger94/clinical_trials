@@ -13,7 +13,7 @@ set more off
 ***************************************************
 global trial_data "data/clinical_trials_08-01-17.dta"
 global trial_data_sample "data/ct_sample.dta"
-global biomarker_data "data/biomarker_data_08-01-17.dta"
+global biomarker_data "data/biomarker_data_08-13-17.dta"
 
 **Write a sample to disk for testing code
 /*
@@ -220,7 +220,7 @@ lab var therapeutic_marker_role "Biomarker role: therapeutic effect"
 lab var disease_marker_role "Biomarker role: disease"
 lab var toxic_marker_role "Biomarker role: toxic effect"
 lab var not_determined_marker_role "Biomarker role: not determined"
-*Fine Roles
+*Detailed Roles
 lab var diagnosis_drole   	    "Biomarker role (detailed): diagnosis"
 lab var diff_diagnosis_drole         "Biomarker role (detailed): differential diagnosis"
 lab var predict_resistance_drole     "Biomarker role (detailed): predicting drug resistance"
@@ -228,6 +228,21 @@ lab var predict_efficacy_drole       "Biomarker role (detailed): predicting trea
 lab var predict_toxicity_drole       "Biomarker role (detailed): predicting treatment toxicity"
 lab var screening_drole              "Biomarker role (detailed): screening"
 lab var selection_for_therapy_drole  "Biomarker role (detailed): selection for therapy"
+
+lab var all_drole   	    		"Biomarker role (detailed): all"
+lab var disease_profiling_drole         "Biomarker role (detailed): disease profiling"
+lab var monitor_progression_drole     	"Biomarker role (detailed): monitoring disease progression"
+lab var monitor_efficacy_drole       	"Biomarker role (detailed): monitoring treatment efficacy"
+lab var monitor_toxicity_drole       	"Biomarker role (detailed): monitoring treatment toxicity"
+lab var not_determined_drole       	"Biomarker role (detailed): not determined"
+lab var prognosis_drole              	"Biomarker role (detailed): prognosis"
+lab var prognosis_riskstrat_drole  	"Biomarker role (detailed): prognosis - risk stratification"
+lab var risk_factor_drole              	"Biomarker role (detailed): risk factor"
+lab var staging_drole              	"Biomarker role (detailed): staging"
+lab var toxicity_profiling_drole        "Biomarker role (detailed): toxicity profiling"
+
+drop all_drole
+
 *Biomarker Types
 lab var anthropomorphic_type	"Biomarker type: anthropomorphic"
 lab var biochemical_type 	"Biomarker type: biochemical"
@@ -242,7 +257,7 @@ lab var most_common_chapter 	"Most common ICD-9 chapter"
 order trial_id date* year* duration ///
 	phase* us_trial neoplasm nih_funding ///
 	recruitment_status patient_count_enrollment ///
-	biomarker_status *_ppm *_drole *_type *_role 
+	biomarker_status *_ppm *_drole *_type *_role most_common_chapter
 	       
 ***************************************************
 **** Select universe of trials ********************

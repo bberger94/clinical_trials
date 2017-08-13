@@ -1,0 +1,569 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/regression_output_08-13-17/regression_output_08-13-17.log
+  log type:  text
+ opened on:  13 Aug 2017, 17:21:49
+
+. 
+. 
+. clear
+
+. set more off
+
+. global stars = " * 0.05 ** 0.01 *** 0.001"
+
+. 
+. use data/prepared_trials.dta , clear
+
+. 
+. ********************************************************************************
+. 
+. gen phase_23 = phase == "Phase 2/Phase 3 Clinical"
+
+.         label var phase_23 "Phase 2/3 Clinical"
+
+.         sum phase_23                                            /* 4.0% of all trials*/
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    phase_23 |    131,971    .0404483    .1970089          0          1
+
+.         sum phase_23 if us_trial==1                     /* 2.6% of US trials*/
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    phase_23 |     49,540    .0255349    .1577447          0          1
+
+. gen phase_2_only = phase_2 == 1 & phase_23==0   
+
+. lab var phase_2_only "Phase 2 only"
+
+. gen phase_comb = phase == "Phase 2/Phase 3 Clinical" | phase == "Phase 1/Phase 2 Clinical"
+
+.         label var phase_comb "Combined Phase Trial (1/2 or 2/3)"
+
+.         sum phase_comb                                          /* 12.0 of all trails*/
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+  phase_comb |    131,971    .1195566    .3244435          0          1
+
+.         sum phase_comb if us_trial ==1          /* 11.8 of US trials*/
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+  phase_comb |     49,540    .1179249    .3225224          0          1
+
+. 
+. sum duration
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    duration |     93,777    35.36761    32.67972   .0333333   614.8666
+
+. 
+. winsor2 duration, suffix(_w) cuts(1 99) /* winsorize duration variable to kill crazy outliers */
+
+.         label var duration_w "Duration in months (winsorized at 1% and 99%)"
+
+.         
+.         
+.         
+. ********************************************************************************
+. set more off
+
+. 
+. *For the below: need to...
+.         *A) un-comment the "margins" rows so that tables print marginal effects from logit regs 
+.         *B) see if we can cluster at ICD-9 chapter (most aggregate) level...can add this to a 4th column
+.         *C) then re-do for r_ppm
+. 
+. cap program drop ppm_regs
+
+. program define ppm_regs
+  1.         syntax, ///
+>         ppm(string) [quietly] [margins]
+  2. 
+.         *all years
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial neoplasm nih_funding genomic_type
+  3.                 if "`margins'" != "" {
+  4.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+  5.                 }
+  6.                 estimates store regs_1a
+  7.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2_only phase_23 phase_3 i.us_trial neoplasm nih_funding genomic_type
+  8.                 if "`margins'" != "" {
+  9.                 `quietly' margins, ///
+>                 dydx(year_start phase_2_only phase_23 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 10.                 }
+ 11.                 estimates store regs_1b
+ 12.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial##i.neoplasm nih_funding genomic_type
+ 13.                 if "`margins'" != "" {
+ 14.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 15.                 }
+ 16.                 estimates store regs_1c
+ 17.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial##i.neoplasm nih_funding genomic_type, ///
+>                 vce(cluster most_common_chapter)
+ 18.                 if "`margins'" != "" {
+ 19.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 20.                 }
+ 21.                 estimates store regs_1d
+ 22. 
+.                 
+.         *Most recent years only
+.         local if = "if year_start >= 2005"
+ 23. 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial neoplasm nih_funding genomic_type `if'
+ 24.                 if "`margins'" != "" {
+ 25.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 26.                 }
+ 27.                 estimates store regs_1e
+ 28.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2_only phase_23 phase_3 i.us_trial neoplasm nih_funding genomic_type `if'
+ 29.                 if "`margins'" != "" {
+ 30.                 `quietly' margins, ///
+>                 dydx(year_start phase_2_only phase_23 phase_3 i.us_trial neoplasm nih_funding genomic_type) post
+ 31.                 }
+ 32.                 estimates store regs_1f
+ 33.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial##i.neoplasm nih_funding genomic_type `if'
+ 34.                 if "`margins'" != "" {
+ 35.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 36.                 }
+ 37.                 estimates store regs_1g
+ 38.                 
+.         `quietly' logit `ppm' ///
+>                 year_start phase_2 phase_3 i.us_trial##i.neoplasm nih_funding genomic_type `if', ///
+>                 vce(cluster most_common_chapter)
+ 39.                 if "`margins'" != "" {
+ 40.                 `quietly' margins, ///
+>                 dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+ 41.                 }
+ 42.                 estimates store regs_1h
+ 43. 
+.         if "`margins'" != "" local fmt 4
+ 44.         else local fmt 3
+ 45.         
+.         estout regs_1a regs_1b regs_1c regs_1d regs_1e regs_1f regs_1g regs_1h, ///
+>                 cells(b(star fmt(`fmt') ) se(par fmt(`fmt') )) ///
+>                 starlevels($stars) ///
+>                 legend label varlabels(_cons Constant) stats(N r2 , fmt(0 3)) ///
+>                 noomitted nobaselevels style(tex)       
+ 46. 
+. end
+
+. 
+.         
+. ********************************************************************************
+. cap program drop duration_regs
+
+. program define duration_regs
+  1.         syntax, ///
+>         [no_estimated_end_dates] ///
+>         [quietly]
+  2.         
+.         preserve
+  3.         keep if year_end>2005
+  4.         if "`no_estimated_end_dates'" != "" keep if date_end_type_ == "actual"
+  5. 
+.         `quietly' reg duration_w ///
+>                 i.year_start phase_2 phase_3 us_trial neoplasm nih_funding g_ppm 
+  6.                 estimates store regs_2a
+  7.         `quietly' reg duration_w ///
+>                 i.year_start phase_2 phase_3 neoplasm nih_funding g_ppm if us_trial == 1 
+  8.                 estimates store regs_2b
+  9.         `quietly' reg duration_w ///
+>                 i.year_start phase_2 phase_3 nih_funding g_ppm if us_trial == 1 & neoplasm==1 
+ 10.                 estimates store regs_2c
+ 11.                 
+.         local roles  *_drole     
+ 12.         `quietly' reg duration_w ///
+>                 year_start phase_2 phase_3 nih_funding g_ppm `roles'  if us_trial == 1 & neoplasm==1 
+ 13.                 estimates store regs_2d
+ 14.                 
+.         estout regs_2a regs_2b regs_2c regs_2d, cells(b(star fmt(3) ) se(par fmt(3) )) ///
+>                 starlevels($stars) legend label varlabels(_cons Constant) stats(N r2, fmt(0 3)) style(tex)      
+ 15.                 
+.         restore
+ 16. end
+
+. 
+. 
+. *************************************************************************************
+. ******************* Make tables *****************************************************
+. *************************************************************************************
+. 
+. *************************************************************************************
+. *G_PPM Logit Coefficients
+. *************************************************************************************
+. ppm_regs, ppm(g_ppm) quietly
+
+                    &     regs_1a   &     regs_1b   &     regs_1c   &     regs_1d   &     regs_1e   &     regs_1f   &     regs_1g   &     regs_1h   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   \\
+Generous PPM        &               &               &               &               &               &               &               &               \\
+Trial start year    &       0.068***&       0.068***&       0.067***&       0.069***&       0.102***&       0.102***&       0.102***&       0.104***\\
+                    &     (0.003)   &     (0.003)   &     (0.003)   &     (0.004)   &     (0.005)   &     (0.005)   &     (0.005)   &     (0.006)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&       0.279***&               &       0.268***&       0.275** &       0.328***&               &       0.314***&       0.322***\\
+                    &     (0.033)   &               &     (0.033)   &     (0.089)   &     (0.036)   &               &     (0.036)   &     (0.090)   \\
+Phase 3 Clinical    &       0.405***&       0.403***&       0.383***&       0.397*  &       0.440***&       0.437***&       0.417***&       0.430*  \\
+                    &     (0.047)   &     (0.047)   &     (0.047)   &     (0.182)   &     (0.051)   &     (0.051)   &     (0.051)   &     (0.182)   \\
+Trial site in US=1  &       0.139***&       0.136***&       0.711***&       0.727***&       0.149***&       0.147***&       0.761***&       0.776***\\
+                    &     (0.031)   &     (0.032)   &     (0.066)   &     (0.114)   &     (0.033)   &     (0.033)   &     (0.069)   &     (0.127)   \\
+Drug indication for neoplasm&       2.745***&       2.739***&               &               &       2.794***&       2.787***&               &               \\
+                    &     (0.038)   &     (0.039)   &               &               &     (0.040)   &     (0.041)   &               &               \\
+Received NIH funding&      -0.151*  &      -0.151*  &      -0.104   &      -0.104***&      -0.192** &      -0.193** &      -0.136*  &      -0.134***\\
+                    &     (0.063)   &     (0.063)   &     (0.063)   &     (0.015)   &     (0.070)   &     (0.070)   &     (0.069)   &     (0.019)   \\
+Biomarker type: genomic&       4.713***&       4.713***&       4.728***&       4.727***&       4.735***&       4.734***&       4.754***&       4.757***\\
+                    &     (0.068)   &     (0.068)   &     (0.068)   &     (0.279)   &     (0.075)   &     (0.075)   &     (0.075)   &     (0.317)   \\
+Phase 2 only        &               &       0.285***&               &               &               &       0.335***&               &               \\
+                    &               &     (0.034)   &               &               &               &     (0.036)   &               &               \\
+Phase 2/3 Clinical  &               &       0.143   &               &               &               &       0.162   &               &               \\
+                    &               &     (0.105)   &               &               &               &     (0.111)   &               &               \\
+Drug indication for neoplasm=1&               &               &       3.101***&       3.120***&               &               &       3.170***&       3.188***\\
+                    &               &               &     (0.055)   &     (0.119)   &               &               &     (0.058)   &     (0.124)   \\
+Trial site in US=1 $\times$ Drug indication for neoplasm=1&               &               &      -0.732***&      -0.745***&               &               &      -0.789***&      -0.801***\\
+                    &               &               &     (0.074)   &     (0.113)   &               &               &     (0.078)   &     (0.129)   \\
+Constant            &    -143.869***&    -143.910***&    -143.462***&    -145.976***&    -212.276***&    -212.390***&    -213.810***&    -217.810***\\
+                    &     (7.030)   &     (7.030)   &     (7.021)   &     (7.894)   &    (10.107)   &    (10.108)   &    (10.104)   &    (12.564)   \\
+N                   &      113410   &      113410   &      113410   &      106626   &       96254   &       96254   &       96254   &       90650   \\
+r2                  &               &               &               &               &               &               &               &               \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. *************************************************************************************
+. *G_PPM Margins
+. *************************************************************************************
+. ppm_regs, ppm(g_ppm) quietly margins
+
+                    &     regs_1a   &     regs_1b   &     regs_1c   &     regs_1d   &     regs_1e   &     regs_1f   &     regs_1g   &     regs_1h   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   \\
+Trial start year    &      0.0027***&      0.0027***&      0.0027***&      0.0029***&      0.0042***&      0.0042***&      0.0042***&      0.0045***\\
+                    &    (0.0001)   &    (0.0001)   &    (0.0001)   &    (0.0002)   &    (0.0002)   &    (0.0002)   &    (0.0002)   &    (0.0003)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&      0.0111***&               &      0.0107***&      0.0115** &      0.0135***&               &      0.0129***&      0.0138***\\
+                    &    (0.0013)   &               &    (0.0013)   &    (0.0035)   &    (0.0015)   &               &    (0.0015)   &    (0.0036)   \\
+Phase 3 Clinical    &      0.0162***&      0.0161***&      0.0153***&      0.0166*  &      0.0181***&      0.0180***&      0.0171***&      0.0185*  \\
+                    &    (0.0019)   &    (0.0019)   &    (0.0019)   &    (0.0073)   &    (0.0021)   &    (0.0021)   &    (0.0021)   &    (0.0074)   \\
+Trial site in US=1  &      0.0056***&      0.0055***&      0.0054***&      0.0056***&      0.0062***&      0.0060***&      0.0061***&      0.0062***\\
+                    &    (0.0013)   &    (0.0013)   &    (0.0013)   &    (0.0016)   &    (0.0014)   &    (0.0014)   &    (0.0014)   &    (0.0018)   \\
+Drug indication for neoplasm&      0.1096***&      0.1093***&               &               &      0.1149***&      0.1146***&               &               \\
+                    &    (0.0011)   &    (0.0011)   &               &               &    (0.0012)   &    (0.0012)   &               &               \\
+Received NIH funding&     -0.0060*  &     -0.0060*  &     -0.0042   &     -0.0043***&     -0.0079** &     -0.0079** &     -0.0056*  &     -0.0058***\\
+                    &    (0.0025)   &    (0.0025)   &    (0.0025)   &    (0.0006)   &    (0.0029)   &    (0.0029)   &    (0.0028)   &    (0.0008)   \\
+Biomarker type: genomic&      0.1881***&      0.1881***&      0.1884***&      0.1976***&      0.1947***&      0.1946***&      0.1951***&      0.2043***\\
+                    &    (0.0025)   &    (0.0025)   &    (0.0025)   &    (0.0102)   &    (0.0028)   &    (0.0028)   &    (0.0028)   &    (0.0117)   \\
+Phase 2 only        &               &      0.0114***&               &               &               &      0.0138***&               &               \\
+                    &               &    (0.0013)   &               &               &               &    (0.0015)   &               &               \\
+Phase 2/3 Clinical  &               &      0.0057   &               &               &               &      0.0067   &               &               \\
+                    &               &    (0.0042)   &               &               &               &    (0.0046)   &               &               \\
+Drug indication for neoplasm=1&               &               &      0.1173***&      0.1207***&               &               &      0.1259***&      0.1294***\\
+                    &               &               &    (0.0013)   &    (0.0030)   &               &               &    (0.0015)   &    (0.0033)   \\
+N                   &      113410   &      113410   &      113410   &      106626   &       96254   &       96254   &       96254   &       90650   \\
+r2                  &               &               &               &               &               &               &               &               \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. *************************************************************************************
+. *R_PPM Logit Coefficients
+. *************************************************************************************
+. ppm_regs, ppm(r_ppm) quietly
+
+                    &     regs_1a   &     regs_1b   &     regs_1c   &     regs_1d   &     regs_1e   &     regs_1f   &     regs_1g   &     regs_1h   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   \\
+Restrictive PPM     &               &               &               &               &               &               &               &               \\
+Trial start year    &       0.062***&       0.062***&       0.062***&       0.064***&       0.093***&       0.093***&       0.093***&       0.095***\\
+                    &     (0.004)   &     (0.004)   &     (0.004)   &     (0.004)   &     (0.005)   &     (0.005)   &     (0.005)   &     (0.005)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&       0.351***&               &       0.343***&       0.355***&       0.397***&               &       0.387***&       0.401***\\
+                    &     (0.035)   &               &     (0.035)   &     (0.058)   &     (0.037)   &               &     (0.037)   &     (0.058)   \\
+Phase 3 Clinical    &       0.589***&       0.586***&       0.573***&       0.595***&       0.621***&       0.617***&       0.605***&       0.626***\\
+                    &     (0.050)   &     (0.050)   &     (0.050)   &     (0.110)   &     (0.054)   &     (0.054)   &     (0.054)   &     (0.114)   \\
+Trial site in US=1  &       0.076*  &       0.073*  &       0.600***&       0.610***&       0.073*  &       0.070*  &       0.638***&       0.642***\\
+                    &     (0.033)   &     (0.033)   &     (0.081)   &     (0.114)   &     (0.035)   &     (0.035)   &     (0.086)   &     (0.130)   \\
+Drug indication for neoplasm&       3.137***&       3.129***&               &               &       3.195***&       3.185***&               &               \\
+                    &     (0.045)   &     (0.046)   &               &               &     (0.048)   &     (0.048)   &               &               \\
+Received NIH funding&      -0.168** &      -0.169** &      -0.138*  &      -0.132***&      -0.181*  &      -0.182*  &      -0.145*  &      -0.141***\\
+                    &     (0.065)   &     (0.065)   &     (0.065)   &     (0.018)   &     (0.071)   &     (0.071)   &     (0.071)   &     (0.017)   \\
+Biomarker type: genomic&       4.716***&       4.715***&       4.725***&       4.725***&       4.750***&       4.749***&       4.762***&       4.766***\\
+                    &     (0.073)   &     (0.073)   &     (0.073)   &     (0.247)   &     (0.081)   &     (0.081)   &     (0.081)   &     (0.271)   \\
+Phase 2 only        &               &       0.358***&               &               &               &       0.405***&               &               \\
+                    &               &     (0.035)   &               &               &               &     (0.037)   &               &               \\
+Phase 2/3 Clinical  &               &       0.151   &               &               &               &       0.163   &               &               \\
+                    &               &     (0.117)   &               &               &               &     (0.124)   &               &               \\
+Drug indication for neoplasm=1&               &               &       3.429***&       3.453***&               &               &       3.502***&       3.521***\\
+                    &               &               &     (0.064)   &     (0.096)   &               &               &     (0.068)   &     (0.099)   \\
+Trial site in US=1 $\times$ Drug indication for neoplasm=1&               &               &      -0.621***&      -0.628***&               &               &      -0.672***&      -0.673***\\
+                    &               &               &     (0.088)   &     (0.111)   &               &               &     (0.093)   &     (0.130)   \\
+Constant            &    -133.586***&    -133.665***&    -133.397***&    -136.362***&    -195.002***&    -195.187***&    -196.035***&    -199.952***\\
+                    &     (7.274)   &     (7.275)   &     (7.268)   &     (8.352)   &    (10.493)   &    (10.495)   &    (10.491)   &    (11.274)   \\
+N                   &      113410   &      113410   &      113410   &      106626   &       96254   &       96254   &       96254   &       90650   \\
+r2                  &               &               &               &               &               &               &               &               \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. *************************************************************************************
+. *R_PPM Margins
+. *************************************************************************************
+. ppm_regs, ppm(r_ppm) quietly margins
+
+                    &     regs_1a   &     regs_1b   &     regs_1c   &     regs_1d   &     regs_1e   &     regs_1f   &     regs_1g   &     regs_1h   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   &        b/se   \\
+Trial start year    &      0.0023***&      0.0023***&      0.0023***&      0.0025***&      0.0035***&      0.0035***&      0.0035***&      0.0038***\\
+                    &    (0.0001)   &    (0.0001)   &    (0.0001)   &    (0.0002)   &    (0.0002)   &    (0.0002)   &    (0.0002)   &    (0.0002)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&      0.0129***&               &      0.0126***&      0.0137***&      0.0150***&               &      0.0146***&      0.0159***\\
+                    &    (0.0013)   &               &    (0.0013)   &    (0.0021)   &    (0.0014)   &               &    (0.0014)   &    (0.0021)   \\
+Phase 3 Clinical    &      0.0216***&      0.0215***&      0.0211***&      0.0230***&      0.0234***&      0.0233***&      0.0228***&      0.0248***\\
+                    &    (0.0018)   &    (0.0018)   &    (0.0018)   &    (0.0040)   &    (0.0020)   &    (0.0020)   &    (0.0020)   &    (0.0042)   \\
+Trial site in US=1  &      0.0028*  &      0.0027*  &      0.0027*  &      0.0028** &      0.0028*  &      0.0026*  &      0.0028*  &      0.0028*  \\
+                    &    (0.0012)   &    (0.0012)   &    (0.0012)   &    (0.0009)   &    (0.0013)   &    (0.0013)   &    (0.0013)   &    (0.0011)   \\
+Drug indication for neoplasm&      0.1153***&      0.1150***&               &               &      0.1207***&      0.1203***&               &               \\
+                    &    (0.0013)   &    (0.0013)   &               &               &    (0.0013)   &    (0.0013)   &               &               \\
+Received NIH funding&     -0.0062** &     -0.0062** &     -0.0051*  &     -0.0051***&     -0.0068*  &     -0.0069*  &     -0.0055*  &     -0.0056***\\
+                    &    (0.0024)   &    (0.0024)   &    (0.0024)   &    (0.0007)   &    (0.0027)   &    (0.0027)   &    (0.0027)   &    (0.0007)   \\
+Biomarker type: genomic&      0.1734***&      0.1733***&      0.1736***&      0.1825***&      0.1794***&      0.1794***&      0.1797***&      0.1889***\\
+                    &    (0.0025)   &    (0.0025)   &    (0.0025)   &    (0.0076)   &    (0.0028)   &    (0.0028)   &    (0.0028)   &    (0.0086)   \\
+Phase 2 only        &               &      0.0132***&               &               &               &      0.0153***&               &               \\
+                    &               &    (0.0013)   &               &               &               &    (0.0014)   &               &               \\
+Phase 2/3 Clinical  &               &      0.0055   &               &               &               &      0.0062   &               &               \\
+                    &               &    (0.0043)   &               &               &               &    (0.0047)   &               &               \\
+Drug indication for neoplasm=1&               &               &      0.1167***&      0.1202***&               &               &      0.1252***&      0.1288***\\
+                    &               &               &    (0.0013)   &    (0.0016)   &               &               &    (0.0014)   &    (0.0018)   \\
+N                   &      113410   &      113410   &      113410   &      106626   &       96254   &       96254   &       96254   &       90650   \\
+r2                  &               &               &               &               &               &               &               &               \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. *************************************************************************************
+. *Duration estimates
+. *************************************************************************************
+. duration_regs, quietly 
+(8,660 observations deleted)
+
+                    &     regs_2a   &     regs_2b   &     regs_2c   &     regs_2d   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   \\
+Trial start year=1995&       0.000   &       0.000   &       0.000   &               \\
+                    &         (.)   &         (.)   &         (.)   &               \\
+Trial start year=1996&      -5.899   &      -4.141   &      -2.533   &               \\
+                    &     (4.576)   &     (5.614)   &     (6.693)   &               \\
+Trial start year=1997&      -6.922   &      -8.806   &     -10.961   &               \\
+                    &     (4.415)   &     (5.519)   &     (6.813)   &               \\
+Trial start year=1998&     -21.963***&     -20.373***&     -17.460** &               \\
+                    &     (4.333)   &     (5.293)   &     (6.425)   &               \\
+Trial start year=1999&     -29.749***&     -27.503***&     -27.289***&               \\
+                    &     (4.060)   &     (4.931)   &     (6.047)   &               \\
+Trial start year=2000&     -38.547***&     -37.598***&     -39.448***&               \\
+                    &     (3.984)   &     (4.846)   &     (5.960)   &               \\
+Trial start year=2001&     -49.095***&     -48.048***&     -47.625***&               \\
+                    &     (3.916)   &     (4.774)   &     (5.856)   &               \\
+Trial start year=2002&     -60.167***&     -59.390***&     -60.544***&               \\
+                    &     (3.868)   &     (4.719)   &     (5.799)   &               \\
+Trial start year=2003&     -69.415***&     -66.632***&     -64.854***&               \\
+                    &     (3.830)   &     (4.666)   &     (5.726)   &               \\
+Trial start year=2004&     -80.550***&     -77.141***&     -73.490***&               \\
+                    &     (3.807)   &     (4.632)   &     (5.679)   &               \\
+Trial start year=2005&     -89.693***&     -87.212***&     -80.109***&               \\
+                    &     (3.794)   &     (4.615)   &     (5.657)   &               \\
+Trial start year=2006&     -93.485***&     -89.976***&     -79.992***&               \\
+                    &     (3.789)   &     (4.608)   &     (5.650)   &               \\
+Trial start year=2007&     -94.819***&     -92.379***&     -83.294***&               \\
+                    &     (3.788)   &     (4.606)   &     (5.648)   &               \\
+Trial start year=2008&     -95.962***&     -94.145***&     -84.800***&               \\
+                    &     (3.786)   &     (4.605)   &     (5.652)   &               \\
+Trial start year=2009&     -95.766***&     -93.316***&     -82.455***&               \\
+                    &     (3.786)   &     (4.605)   &     (5.647)   &               \\
+Trial start year=2010&     -96.602***&     -94.209***&     -87.900***&               \\
+                    &     (3.786)   &     (4.606)   &     (5.651)   &               \\
+Trial start year=2011&     -97.480***&     -94.965***&     -87.194***&               \\
+                    &     (3.785)   &     (4.606)   &     (5.654)   &               \\
+Trial start year=2012&     -97.466***&     -94.031***&     -89.177***&               \\
+                    &     (3.785)   &     (4.607)   &     (5.662)   &               \\
+Trial start year=2013&     -98.622***&     -96.495***&     -91.339***&               \\
+                    &     (3.785)   &     (4.607)   &     (5.660)   &               \\
+Trial start year=2014&    -100.128***&     -98.123***&     -95.310***&               \\
+                    &     (3.785)   &     (4.606)   &     (5.659)   &               \\
+Trial start year=2015&    -101.067***&     -99.954***&     -97.584***&               \\
+                    &     (3.784)   &     (4.604)   &     (5.650)   &               \\
+Trial start year=2016&    -102.289***&    -100.473***&     -96.253***&               \\
+                    &     (3.784)   &     (4.605)   &     (5.651)   &               \\
+Trial start year    &               &               &               &      -3.121***\\
+                    &               &               &               &     (0.061)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&       7.473***&       6.195***&       4.870***&       4.225***\\
+                    &     (0.208)   &     (0.322)   &     (0.533)   &     (0.582)   \\
+Phase 3 Clinical    &      11.283***&       7.989***&      14.850***&      16.634***\\
+                    &     (0.245)   &     (0.404)   &     (0.947)   &     (1.025)   \\
+Trial site in US    &       5.398***&               &               &               \\
+                    &     (0.184)   &               &               &               \\
+Drug indication for neoplasm&      22.541***&      20.567***&               &               \\
+                    &     (0.209)   &     (0.326)   &               &               \\
+Received NIH funding&      12.733***&      12.745***&       8.527***&       7.352***\\
+                    &     (0.529)   &     (0.595)   &     (0.882)   &     (0.959)   \\
+Generous PPM        &       8.751***&       9.805***&       9.203***&       7.804***\\
+                    &     (0.357)   &     (0.516)   &     (0.626)   &     (0.938)   \\
+Biomarker role (detailed): diagnosis&               &               &               &       2.035   \\
+                    &               &               &               &     (1.320)   \\
+Biomarker role (detailed): differential diagnosis&               &               &               &       4.076***\\
+                    &               &               &               &     (1.052)   \\
+Biomarker role (detailed): predicting drug resistance&               &               &               &      -2.948*  \\
+                    &               &               &               &     (1.149)   \\
+Biomarker role (detailed): predicting treatment efficacy&               &               &               &      -0.452   \\
+                    &               &               &               &     (1.351)   \\
+Biomarker role (detailed): predicting treatment toxicity&               &               &               &       0.952   \\
+                    &               &               &               &     (1.735)   \\
+Biomarker role (detailed): screening&               &               &               &       1.312   \\
+                    &               &               &               &     (1.466)   \\
+Biomarker role (detailed): selection for therapy&               &               &               &      -4.031***\\
+                    &               &               &               &     (1.148)   \\
+Biomarker role (detailed): disease profiling&               &               &               &       2.656*  \\
+                    &               &               &               &     (1.055)   \\
+Biomarker role (detailed): monitoring disease progression&               &               &               &      -0.286   \\
+                    &               &               &               &     (1.336)   \\
+Biomarker role (detailed): monitoring treatment efficacy&               &               &               &       2.237   \\
+                    &               &               &               &     (1.176)   \\
+Biomarker role (detailed): monitoring treatment toxicity&               &               &               &       1.193   \\
+                    &               &               &               &     (2.226)   \\
+Biomarker role (detailed): not determined&               &               &               &       3.795   \\
+                    &               &               &               &     (2.091)   \\
+Biomarker role (detailed): prognosis&               &               &               &       1.198   \\
+                    &               &               &               &     (1.241)   \\
+Biomarker role (detailed): prognosis - risk stratification&               &               &               &       2.960*  \\
+                    &               &               &               &     (1.408)   \\
+Biomarker role (detailed): risk factor&               &               &               &       0.523   \\
+                    &               &               &               &     (1.084)   \\
+Biomarker role (detailed): staging&               &               &               &      -4.272***\\
+                    &               &               &               &     (1.175)   \\
+Biomarker role (detailed): toxicity profiling&               &               &               &      -3.957   \\
+                    &               &               &               &    (11.956)   \\
+Constant            &     114.556***&     119.542***&     134.880***&    6319.361***\\
+                    &     (3.781)   &     (4.591)   &     (5.587)   &   (123.376)   \\
+N                   &       80334   &       38668   &       14663   &       13208   \\
+r2                  &       0.352   &       0.327   &       0.245   &       0.207   \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. *************************************************************************************
+. *Duration estimates for trials with actual (non-estimated) end dates
+. *************************************************************************************
+. duration_regs, quietly no_estimated_end_dates
+(8,660 observations deleted)
+
+                    &     regs_2a   &     regs_2b   &     regs_2c   &     regs_2d   \\
+                    &        b/se   &        b/se   &        b/se   &        b/se   \\
+Trial start year=1995&       0.000   &       0.000   &       0.000   &               \\
+                    &         (.)   &         (.)   &         (.)   &               \\
+Trial start year=1996&      -5.899   &      -4.141   &      -2.533   &               \\
+                    &     (4.576)   &     (5.614)   &     (6.693)   &               \\
+Trial start year=1997&      -6.922   &      -8.806   &     -10.961   &               \\
+                    &     (4.415)   &     (5.519)   &     (6.813)   &               \\
+Trial start year=1998&     -21.963***&     -20.373***&     -17.460** &               \\
+                    &     (4.333)   &     (5.293)   &     (6.425)   &               \\
+Trial start year=1999&     -29.749***&     -27.503***&     -27.289***&               \\
+                    &     (4.060)   &     (4.931)   &     (6.047)   &               \\
+Trial start year=2000&     -38.547***&     -37.598***&     -39.448***&               \\
+                    &     (3.984)   &     (4.846)   &     (5.960)   &               \\
+Trial start year=2001&     -49.095***&     -48.048***&     -47.625***&               \\
+                    &     (3.916)   &     (4.774)   &     (5.856)   &               \\
+Trial start year=2002&     -60.167***&     -59.390***&     -60.544***&               \\
+                    &     (3.868)   &     (4.719)   &     (5.799)   &               \\
+Trial start year=2003&     -69.415***&     -66.632***&     -64.854***&               \\
+                    &     (3.830)   &     (4.666)   &     (5.726)   &               \\
+Trial start year=2004&     -80.550***&     -77.141***&     -73.490***&               \\
+                    &     (3.807)   &     (4.632)   &     (5.679)   &               \\
+Trial start year=2005&     -89.693***&     -87.212***&     -80.109***&               \\
+                    &     (3.794)   &     (4.615)   &     (5.657)   &               \\
+Trial start year=2006&     -93.485***&     -89.976***&     -79.992***&               \\
+                    &     (3.789)   &     (4.608)   &     (5.650)   &               \\
+Trial start year=2007&     -94.819***&     -92.379***&     -83.294***&               \\
+                    &     (3.788)   &     (4.606)   &     (5.648)   &               \\
+Trial start year=2008&     -95.962***&     -94.145***&     -84.800***&               \\
+                    &     (3.786)   &     (4.605)   &     (5.652)   &               \\
+Trial start year=2009&     -95.766***&     -93.316***&     -82.455***&               \\
+                    &     (3.786)   &     (4.605)   &     (5.647)   &               \\
+Trial start year=2010&     -96.602***&     -94.209***&     -87.900***&               \\
+                    &     (3.786)   &     (4.606)   &     (5.651)   &               \\
+Trial start year=2011&     -97.480***&     -94.965***&     -87.194***&               \\
+                    &     (3.785)   &     (4.606)   &     (5.654)   &               \\
+Trial start year=2012&     -97.466***&     -94.031***&     -89.177***&               \\
+                    &     (3.785)   &     (4.607)   &     (5.662)   &               \\
+Trial start year=2013&     -98.622***&     -96.495***&     -91.339***&               \\
+                    &     (3.785)   &     (4.607)   &     (5.660)   &               \\
+Trial start year=2014&    -100.128***&     -98.123***&     -95.310***&               \\
+                    &     (3.785)   &     (4.606)   &     (5.659)   &               \\
+Trial start year=2015&    -101.067***&     -99.954***&     -97.584***&               \\
+                    &     (3.784)   &     (4.604)   &     (5.650)   &               \\
+Trial start year=2016&    -102.289***&    -100.473***&     -96.253***&               \\
+                    &     (3.784)   &     (4.605)   &     (5.651)   &               \\
+Trial start year    &               &               &               &      -3.121***\\
+                    &               &               &               &     (0.061)   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&       7.473***&       6.195***&       4.870***&       4.225***\\
+                    &     (0.208)   &     (0.322)   &     (0.533)   &     (0.582)   \\
+Phase 3 Clinical    &      11.283***&       7.989***&      14.850***&      16.634***\\
+                    &     (0.245)   &     (0.404)   &     (0.947)   &     (1.025)   \\
+Trial site in US    &       5.398***&               &               &               \\
+                    &     (0.184)   &               &               &               \\
+Drug indication for neoplasm&      22.541***&      20.567***&               &               \\
+                    &     (0.209)   &     (0.326)   &               &               \\
+Received NIH funding&      12.733***&      12.745***&       8.527***&       7.352***\\
+                    &     (0.529)   &     (0.595)   &     (0.882)   &     (0.959)   \\
+Generous PPM        &       8.751***&       9.805***&       9.203***&       7.804***\\
+                    &     (0.357)   &     (0.516)   &     (0.626)   &     (0.938)   \\
+Biomarker role (detailed): diagnosis&               &               &               &       2.035   \\
+                    &               &               &               &     (1.320)   \\
+Biomarker role (detailed): differential diagnosis&               &               &               &       4.076***\\
+                    &               &               &               &     (1.052)   \\
+Biomarker role (detailed): predicting drug resistance&               &               &               &      -2.948*  \\
+                    &               &               &               &     (1.149)   \\
+Biomarker role (detailed): predicting treatment efficacy&               &               &               &      -0.452   \\
+                    &               &               &               &     (1.351)   \\
+Biomarker role (detailed): predicting treatment toxicity&               &               &               &       0.952   \\
+                    &               &               &               &     (1.735)   \\
+Biomarker role (detailed): screening&               &               &               &       1.312   \\
+                    &               &               &               &     (1.466)   \\
+Biomarker role (detailed): selection for therapy&               &               &               &      -4.031***\\
+                    &               &               &               &     (1.148)   \\
+Biomarker role (detailed): disease profiling&               &               &               &       2.656*  \\
+                    &               &               &               &     (1.055)   \\
+Biomarker role (detailed): monitoring disease progression&               &               &               &      -0.286   \\
+                    &               &               &               &     (1.336)   \\
+Biomarker role (detailed): monitoring treatment efficacy&               &               &               &       2.237   \\
+                    &               &               &               &     (1.176)   \\
+Biomarker role (detailed): monitoring treatment toxicity&               &               &               &       1.193   \\
+                    &               &               &               &     (2.226)   \\
+Biomarker role (detailed): not determined&               &               &               &       3.795   \\
+                    &               &               &               &     (2.091)   \\
+Biomarker role (detailed): prognosis&               &               &               &       1.198   \\
+                    &               &               &               &     (1.241)   \\
+Biomarker role (detailed): prognosis - risk stratification&               &               &               &       2.960*  \\
+                    &               &               &               &     (1.408)   \\
+Biomarker role (detailed): risk factor&               &               &               &       0.523   \\
+                    &               &               &               &     (1.084)   \\
+Biomarker role (detailed): staging&               &               &               &      -4.272***\\
+                    &               &               &               &     (1.175)   \\
+Biomarker role (detailed): toxicity profiling&               &               &               &      -3.957   \\
+                    &               &               &               &    (11.956)   \\
+Constant            &     114.556***&     119.542***&     134.880***&    6319.361***\\
+                    &     (3.781)   &     (4.591)   &     (5.587)   &   (123.376)   \\
+N                   &       80334   &       38668   &       14663   &       13208   \\
+r2                  &       0.352   &       0.327   &       0.245   &       0.207   \\
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  /disk/homedirs/nber/bergerb/cortellis_projects/clinical_trials/reports/regression_output_08-13-17/regression_output_08-13-17.log
+  log type:  text
+ closed on:  13 Aug 2017, 17:29:54
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

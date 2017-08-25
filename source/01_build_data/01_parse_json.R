@@ -25,10 +25,11 @@ my_expand <- function(df, id, var) {
   varname <- deparse(substitute(var))
   
   f <- function(row) {
+    print(row[[get_name(id)]])
     assert(class(row) == "list")
     if(varname == '~SitesByCountries') data <- json_to_dataframe_geodata(row[[get_name(var)]])
     else data <- json_to_dataframe(row[[get_name(var)]], varname)
-    data[[get_name(id)]] <- row[[get_name(id)]]
+    if(nrow(data) > 0) data[[get_name(id)]] <- row[[get_name(id)]]
     return(data)
   }
   
@@ -183,6 +184,17 @@ us_trials_long <-
   summarize(us_trial = any(us_trial))
 
 
+# n_trials <- nrow(trials)
+# country_trial_count <- 
+#   trials %>% 
+#   my_expand(trial_id, SitesByCountries) %>% 
+#   group_by(country) %>% 
+#   summarize(n = n() / n_trials) 
+# country_trial_count %>% arrange(n) %>% View
+
+
+
+
 ################################
 #Load Trial biomarkers
 trial_biomarkers <- 
@@ -270,7 +282,6 @@ biomarker_data <-
 save(file = 'data/biomarker_data_08-13-17.RData', biomarker_data)
 write_csv(biomarker_data, 'data/biomarker_data_08-13-17.csv')
 write_dta(biomarker_data, 'data/biomarker_data_08-13-17.dta', version = 12)
-
 #save.image(file = 'data/long_data.RData')
 
 

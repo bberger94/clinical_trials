@@ -1,0 +1,65 @@
+
+\begin{table}[htb]\centering
+\caption{OLS regression \\ Dependent variable: Duration in months (winsorized to remove extreme outliers) \\ Trials ending after 2005 with actual or estimated end dates}
+\begin{tabular}{l*{4}c}
+
+                    &     (1)       &         (2)   &       (3)     &     (4)      \\
+                    &    All trials  &  US trials & \multicolumn{2}{c}{US cancer trials} \\                    
+                    &        b/se   &        b/se   &        b/se   &        b/se   \\
+\hline
+Start year control & Fixed Effects   &  Fixed Effects   &  Fixed Effects   & Linear   \\
+Phase 2 Clinical (includes Phase 2/Phase 3 trials)&       7.473***&       6.195***&       4.870***&       4.225***\\
+                    &     (0.208)   &     (0.322)   &     (0.533)   &     (0.582)   \\
+Phase 3 Clinical    &      11.283***&       7.989***&      14.850***&      16.634***\\
+                    &     (0.245)   &     (0.404)   &     (0.947)   &     (1.025)   \\
+Trial site in US    &       5.398***&               &               &               \\
+                    &     (0.184)   &               &               &               \\
+Drug indication for neoplasm&      22.541***&      20.567***&               &               \\
+                    &     (0.209)   &     (0.326)   &               &               \\
+Received NIH funding&      12.733***&      12.745***&       8.527***&       7.352***\\
+                    &     (0.529)   &     (0.595)   &     (0.882)   &     (0.959)   \\
+Generous PPM        &       8.751***&       9.805***&       9.203***&       7.804***\\
+                    &     (0.357)   &     (0.516)   &     (0.626)   &     (0.938)   \\
+Biomarker role (detailed): diagnosis&               &               &               &       2.035   \\
+                    &               &               &               &     (1.320)   \\
+Biomarker role (detailed): differential diagnosis&               &               &               &       4.076***\\
+                    &               &               &               &     (1.052)   \\
+Biomarker role (detailed): predicting drug resistance&               &               &               &      -2.948*  \\
+                    &               &               &               &     (1.149)   \\
+Biomarker role (detailed): predicting treatment efficacy&               &               &               &      -0.452   \\
+                    &               &               &               &     (1.351)   \\
+Biomarker role (detailed): predicting treatment toxicity&               &               &               &       0.952   \\
+                    &               &               &               &     (1.735)   \\
+Biomarker role (detailed): screening&               &               &               &       1.312   \\
+                    &               &               &               &     (1.466)   \\
+Biomarker role (detailed): selection for therapy&               &               &               &      -4.031***\\
+                    &               &               &               &     (1.148)   \\
+Biomarker role (detailed): disease profiling&               &               &               &       2.656*  \\
+                    &               &               &               &     (1.055)   \\
+Biomarker role (detailed): monitoring disease progression&               &               &               &      -0.286   \\
+                    &               &               &               &     (1.336)   \\
+Biomarker role (detailed): monitoring treatment efficacy&               &               &               &       2.237   \\
+                    &               &               &               &     (1.176)   \\
+Biomarker role (detailed): monitoring treatment toxicity&               &               &               &       1.193   \\
+                    &               &               &               &     (2.226)   \\
+Biomarker role (detailed): not determined&               &               &               &       3.795   \\
+                    &               &               &               &     (2.091)   \\
+Biomarker role (detailed): prognosis&               &               &               &       1.198   \\
+                    &               &               &               &     (1.241)   \\
+Biomarker role (detailed): prognosis - risk stratification&               &               &               &       2.960*  \\
+                    &               &               &               &     (1.408)   \\
+Biomarker role (detailed): risk factor&               &               &               &       0.523   \\
+                    &               &               &               &     (1.084)   \\
+Biomarker role (detailed): staging&               &               &               &      -4.272***\\
+                    &               &               &               &     (1.175)   \\
+Biomarker role (detailed): toxicity profiling&               &               &               &      -3.957   \\
+                    &               &               &               &    (11.956)   \\
+Constant            &     114.556***&     119.542***&     134.880***&    6319.361***\\
+                    &     (3.781)   &     (4.591)   &     (5.587)   &   (123.376)   \\
+N                   &       80334   &       38668   &       14663   &       13208   \\
+r2                  &       0.352   &       0.327   &       0.245   &       0.207   \\
+* p$<$0.05, ** p$<$0.01, *** p$<$0.001 \\
+
+\end{tabular}
+\end{table}
+

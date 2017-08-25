@@ -139,12 +139,15 @@ end
 cap program drop duration_regs
 program define duration_regs
 	syntax, ///
-	[no_estimated_end_dates] ///
+	[end_dates(string)] ///
 	[quietly]
+	
 	
 	preserve
 	keep if year_end>2005
-	if "`no_estimated_end_dates'" != "" keep if date_end_type_ == "actual"
+	
+	di "`no_estimated_end_dates'"
+	if "`end_dates'" != "" keep if date_end_type_ == "`end_dates'"
 
 	`quietly' reg duration_w ///
 		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding g_ppm 
@@ -156,6 +159,7 @@ program define duration_regs
 		i.year_start phase_2 phase_3 nih_funding g_ppm if us_trial == 1 & neoplasm==1 
 		estimates store regs_2c
 		
+	replace year_start = year_start
 	local roles  *_drole 	 
 	`quietly' reg duration_w ///
 		year_start phase_2 phase_3 nih_funding g_ppm `roles'  if us_trial == 1 & neoplasm==1 
@@ -165,6 +169,7 @@ program define duration_regs
 		starlevels($stars) legend label varlabels(_cons Constant) stats(N r2, fmt(0 3)) style(tex)	
 		
 	restore
+	
 end
 
 
@@ -200,7 +205,7 @@ duration_regs, quietly
 *************************************************************************************
 *Duration estimates for trials with actual (non-estimated) end dates
 *************************************************************************************
-duration_regs, quietly no_estimated_end_dates
+duration_regs, quietly end_dates("actual")
 
 
 

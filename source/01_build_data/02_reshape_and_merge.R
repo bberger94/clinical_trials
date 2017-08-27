@@ -11,7 +11,6 @@ library(tidyr)
 library(haven)
 library(readr)
 
-
 #To reshape trial data long to wide
 my_reshape <- function(df) {
   df %>% 
@@ -38,6 +37,7 @@ data_wide <-
 
 #Reshape intermediary dataframes wide and right join by trial_id
 for(longdata in ls(pattern = '*_long')){
+  print(longdata)
   longdata <- get(longdata) 
   data_wide <- longdata %>% my_reshape %>% right_join(data_wide)
 }
@@ -102,8 +102,8 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = 'data/clinical_trials_08-01-17.RData', data) 
-write_csv(data, 'data/clinical_trials_08-01-17.csv') 
-write_dta(data, 'data/clinical_trials_08-01-17.dta', version = 12) 
+save(file = 'data/clinical_trials_08-27-17.RData', data) 
+write_csv(data, 'data/clinical_trials_08-27-17.csv') 
+write_dta(data, 'data/clinical_trials_08-27-17.dta', version = 12) 
 
 

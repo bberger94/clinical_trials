@@ -95,9 +95,7 @@ load('data/long_data.RData')
 # in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
 # in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
 # nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
-#icd9_xwalk <- read_csv('../bkthruWork_local/indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
-#icd9_xwalk <- read_csv('../indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_cancerValidated.csv')
-
+icd9_xwalk <- read_csv('../bkthruWork_local/indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_Validated.csv')
 
 ## Subset to test functions
 set.seed(101)
@@ -132,8 +130,7 @@ icd9_long <-
   left_join(icd9_xwalk, by = c('indication_name' = 'cortellis_condition')) %>% 
   select(trial_id, starts_with('icd9'), malignant_not_specified)
 
-
-#Trial Identifiers and NIH funding
+# Trial Identifiers and NIH funding
 identifiers_long <-
   trials %>% 
   my_expand(trial_id, Identifiers) %>% 
@@ -182,17 +179,6 @@ us_trials_long <-
   mutate(us_trial = (country == 'US')) %>% 
   ungroup %>% group_by(trial_id) %>% 
   summarize(us_trial = any(us_trial))
-
-
-# n_trials <- nrow(trials)
-# country_trial_count <- 
-#   trials %>% 
-#   my_expand(trial_id, SitesByCountries) %>% 
-#   group_by(country) %>% 
-#   summarize(n = n() / n_trials) 
-# country_trial_count %>% arrange(n) %>% View
-
-
 
 
 ################################

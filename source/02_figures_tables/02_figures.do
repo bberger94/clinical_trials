@@ -13,7 +13,7 @@ use "data/prepared_trials.dta", clear
 
 **Define directory for reports
 set more off
-local report_dir "reports/report_08-08-17"
+local report_dir "reports/report_08-28-17"
 local figure_dir "`report_dir'/figures"
 
 foreach dir in `report_dir' `table_dir' `figure_dir' {
@@ -28,7 +28,6 @@ do "source/02_figures_tables/figures_fns.do"
 ********************************************************************************
 ********************************************************************************
 set scheme s1mono
-
 
 *Figure 1a
 trial_count_by_phase, figure_path("`figure_dir'/01a-trial_count_by_phase.eps")
@@ -252,26 +251,30 @@ trial_share_by_phase, var(r_ppm) ///
 			figure_path("`figure_dir'/08d-r_ppm_share_by_phase_non-us.eps")
 restore
 
+
 *Figure 9
 *9a
+preserve
+keep if us_trial == 1
 trial_share_by_phase, var(nih_funding) ///
-			title("Share of registered trials receiving NIH funding by phase") ///
-			ylabel("ylabel(0(2)20, angle(0))") ///
+			title("Share of US trials receiving NIH funding by phase") ///
+			ylabel("ylabel(0(5)30, angle(0))") ///
 			figure_path("`figure_dir'/09a-nih_share_by_phase.eps")
+restore
 *9b
 preserve
-keep if g_ppm == 1 & year_start >= 1996
+keep if g_ppm == 1 & us_trial == 1 & year_start >= 1996
 trial_share_by_phase, var(nih_funding) ///
-			title("Share of trials with PPM biomarkers (generous) receiving NIH funding") ///
-			ylabel("ylabel(0(2)20, angle(0))") ///
+			title("Share of US trials with PPM biomarkers (generous) receiving NIH funding") ///
+			ylabel("ylabel(0(5)30, angle(0))") ///
 			figure_path("`figure_dir'/09b-nih_share_by_phase_g_ppm.eps")
 restore
 *9c
 preserve
-keep if r_ppm == 1 & year_start >= 1996
+keep if r_ppm == 1 & us_trial == 1 & year_start >= 1996
 trial_share_by_phase, var(nih_funding) ///
-			title("Share of trials with PPM biomarkers (restrictive) receiving NIH funding") ///
-			ylabel("ylabel(0(2)20, angle(0))") ///
+			title("Share of US trials with PPM biomarkers (restrictive) receiving NIH funding") ///
+			ylabel("ylabel(0(5)35, angle(0))") ///
 			figure_path("`figure_dir'/09c-nih_share_by_phase_r_ppm.eps")
 restore
 

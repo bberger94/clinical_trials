@@ -11,8 +11,8 @@ set more off
 ***************************************************
 **** Load Data ************************************
 ***************************************************
-global trial_data "data/clinical_trials_08-01-17.dta"
-global trial_data_sample "data/ct_sample.dta"
+global trial_data "data/clinical_trials_08-27-17.dta"
+//global trial_data_sample "data/ct_sample.dta"
 global biomarker_data "data/biomarker_data_08-13-17.dta"
 
 **Write a sample to disk for testing code
@@ -37,9 +37,9 @@ rename date_end_type date_end_type_
 replace phase_2 = 0 if phase_1 == 1 & phase_2 == 1
 replace phase_3 = 0 if phase_2 == 1 & phase_3 == 1
 **Verify the recoding was successful (both should return 0)
-count if phase_1 & phase_2
+count if phase_1 == 1 & phase_2 == 1
 assert `r(N)' == 0
-count if phase_2 & phase_3
+count if phase_2 == 1 & phase_3 == 1
 assert `r(N)' == 0
 
 

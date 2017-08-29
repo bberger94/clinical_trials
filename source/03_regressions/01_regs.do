@@ -103,28 +103,27 @@ program define duration_regs
 	syntax, ///
 	[end_dates(string)] ///
 	[quietly]
-	
-	
+		
 	preserve
-	keep if year_end>2005
+	keep if year_start >= 2000
 	
-	di "`no_estimated_end_dates'"
+	di "`end_dates'"
 	if "`end_dates'" != "" keep if date_end_type_ == "`end_dates'"
 
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding g_ppm 
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding g_ppm , robust
 		estimates store reg2a
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding g_ppm if us_trial == 1 
+		i.year_start phase_2 phase_3 neoplasm nih_funding g_ppm if us_trial == 1 , robust
 		estimates store reg2b
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding g_ppm if us_trial == 1 & neoplasm==1 
+		i.year_start phase_2 phase_3 nih_funding g_ppm if us_trial == 1 & neoplasm==1 , robust
 		estimates store reg2c
 		
 	replace year_start = year_start
 	local roles  *_drole 	 
 	`quietly' reg duration_w ///
-		year_start phase_2 phase_3 nih_funding g_ppm `roles'  if us_trial == 1 & neoplasm==1 
+		i.year_start phase_2 phase_3 nih_funding `roles'  if us_trial == 1 & neoplasm==1 , robust
 		estimates store reg2d
 		
 	estout reg2*, cells(b(star fmt(3) ) se(par fmt(3) )) ///
@@ -138,24 +137,20 @@ end
 ******************* Make tables *****************************************************
 *************************************************************************************
 
-local output_dir "reports/regression_output_08-28-17"
+local output_dir "reports/regression_output_08-29-17"
 !mkdir `output_dir'
-log using "`output_dir'/regression_output_08-28-17.log", replace
+log using "`output_dir'/regression_output_08-29-17.log", replace
 
 * ------------------------------*
 * Main PPM regressions (Table 7)
 * ------------------------------*
-
 ppm_regs, ppm(g_ppm) estimator(regress) quietly 
 ppm_regs, ppm(r_ppm) estimator(regress) quietly
 
 * ------------------------------*
 * Duration regressions (Table 8)
 * ------------------------------*
-
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *\
-  Run programs here when final model specs are determined 
-\* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */ 
+duration_regs, end_dates("actual")
 
 
 * ------------------------------*
@@ -163,6 +158,7 @@ ppm_regs, ppm(r_ppm) estimator(regress) quietly
 * ------------------------------*
 ppm_regs, ppm(g_ppm) estimator(logit) margins quietly
 ppm_regs, ppm(r_ppm) estimator(logit) margins quietly
+
 
 
 

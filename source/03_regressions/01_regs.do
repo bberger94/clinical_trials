@@ -10,7 +10,6 @@ set more off
 global stars = " * 0.05 ** 0.01 *** 0.001"
 
 use data/prepared_trials.dta , clear
-sample 20
 
 ********************************************************************************
 

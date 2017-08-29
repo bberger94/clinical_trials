@@ -13,7 +13,7 @@ use "data/prepared_trials.dta", clear
 
 **Define directory for reports
 set more off
-local report_dir "reports/report_08-28-17"
+local report_dir "reports/report_08-29-17"
 local figure_dir "`report_dir'/figures"
 
 foreach dir in `report_dir' `table_dir' `figure_dir' {

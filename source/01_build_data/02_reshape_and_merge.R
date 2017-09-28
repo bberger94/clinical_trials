@@ -1,33 +1,51 @@
-###############################################################################
-## 02_reshape_and_merge.R ; Author: Ben Berger;                              ##
-##                                                                           ##
-## Takes parsed data in the long format produced by "01_parse_json.R",       ##
-## and reshapes them in the wide format with each row representing a unique  ##
-## trial                                                                     ##
-###############################################################################
+## ------------------------------------------------------------------------------------------------ ##
+## ------------------------------------------------------------------------------------------------ ##
+## 03_reshape_and_merge.R ; Author: Ben Berger;                              
+##                                                                           
+## Takes parsed data in the long format produced by "02_parse_json.R",       
+## and reshapes them in the wide format with each row representing a unique trial                                                                     ##
+##
+## ------------------------------------------------------------------------------------------------ ##
+## ------------------------------------------------------------------------------------------------ ##
+
+# Note BAB 9-14: Just ran 02_parse_trial_json.R ; try running this file now
+
 
 library(dplyr)
 library(tidyr)
 library(haven)
 library(readr)
+library(lubridate)
 
-#To reshape trial data long to wide
+# Define function to reshape trial data long to wide
 my_reshape <- function(df) {
+
+  is.POSIXct <- function(x) 'POSIXct' %in% class(x)
+  
   df %>% 
     group_by(trial_id) %>% 
+    mutate_if(is.POSIXct, as.character.Date) %>% 
     mutate(i = 1:n()) %>% 
     mutate(i = as.character(sprintf("%03d", i))) %>% 
     ungroup %>% 
     select(trial_id, everything()) %>% 
     gather(key, value, -c(i, trial_id)) %>% 
+    group_by(key) %>% mutate(one_value = (all(i == '001'))) %>% ungroup %>%  #for each variable identify if only 1 value
     unite(key_i, c(key, i)) %>% 
+    mutate(key_i = replace( x = key_i,
+                            list = one_value == TRUE,
+                            values = substr(key_i, 1, nchar(key_i) - 4) # if only 1 var value, remove trailing "_001"
+                            )
+           ) %>% 
+    select(-one_value) %>% 
     spread(key_i, value)
 }
 
-#Load data from 01_parse_json
-#load('data/long_data.RData')
 
-#Initialize a tibble with only non-json columns
+#Load long data (from 02_parse_trial_json)
+load('data/long_data.RData')
+
+# Initialize a tibble with only non-json columns
 data_wide <-
   trials %>%
   select(trial_id,
@@ -35,12 +53,29 @@ data_wide <-
          patient_count_enrollment = PatientCountEnrollment,
          phase = Phase) 
 
-#Reshape intermediary dataframes wide and right join by trial_id
-for(longdata in ls(pattern = '*_long')){
+# Make a copy for companies 
+firms_wide <-
+  trials %>%
+  select(trial_id) 
+
+
+# Reshape long dataframes wide and right join by trial_id 
+# First for just firm-level data
+longdata_names_firms <- c('sponsors_long', 'collaborators_long')
+for(longdata in longdata_names_firms){
   print(longdata)
   longdata <- get(longdata) 
-  data_wide <- longdata %>% my_reshape %>% right_join(data_wide)
+  firms_wide <- longdata %>% my_reshape %>% right_join(firms_wide, by = 'trial_id')
 }
+
+# Then for everything else
+longdata_names_nofirms <- setdiff(ls(pattern = '*_long'), longdata_names_firms)
+for(longdata in longdata_names_nofirms ){
+  print(longdata)
+  longdata <- get(longdata) 
+  data_wide <- longdata %>% my_reshape %>% right_join(data_wide, by = 'trial_id')
+}
+
 
 #Make phase indicators; indicator of biomarker presence
 data_wide <- 
@@ -48,51 +83,37 @@ data_wide <-
   mutate(phase_1 = grepl('Phase 1', phase),
          phase_2 = grepl('Phase 2', phase),
          phase_3 = grepl('Phase 3', phase),
-         phase_4 = grepl('Phase 4', phase),
-         #biomarker_status = !is.na(biomarker_id_001)
+         phase_4 = grepl('Phase 4', phase)
          ) 
 
-#Replace phase_N columns with NA if phase is not specified 
+#Replace phase_ columns with NA if phase is not specified 
 #'Phase Not Applicable' returns phase_N = 0 for all trial phases N
-data_wide[data_wide$phase == 'Phase not specified',grep('phase_', colnames(data_wide))] <- NA
+# data_wide[data_wide$phase == 'Phase not specified',grep('phase_', colnames(data_wide))] <- NA
 
-#Replace trial biomarker role indicators with false if no biomarker was used
-# f <- function(x){
-#   x[is.na(x)] <- FALSE
-#   x
-# }
-# data_wide <-
-#   data_wide %>%
-#   mutate_at(vars(ends_with('_marker_001')), f)
+# Replace nih funding indicator with false if NA (which means no trial identifiers)
+data_wide$nih_funding[is.na(data_wide$nih_funding)] <- FALSE
+table(data_wide$nih_funding)
 
-# table(data_wide$disease_marker_001)
-
-#Same for nih funding
-data_wide$nih_funding_001[is.na(data_wide$nih_funding_001)] <- FALSE
-table(data_wide$nih_funding_001)
-
-#Make the data pretty(ish)!
+# Make the data pretty(ish)!
 data <- 
   data_wide %>% 
   select(
     trial_id, 
-    date_start = date_start,
-    date_end = date_end_001,
-    date_end_type = date_end_type_001,
+    date_start,
+    date_end,
+    date_end_type,
     starts_with('phase'),
     #biomarker_status, 
-    us_trial = us_trial_001,
-    nih_funding = nih_funding_001,
+    us_trial,
+    nih_funding,
     patient_count_enrollment,
-    recruitment_status = recruitment_status_001,
+    recruitment_status,
     # disease_marker_role = disease_marker_001,
     # toxic_marker_role = toxic_marker_001,
     # therapeutic_marker_role = therapeutic_marker_001,
     # not_determined_marker_role = not_determined_marker_001,
     starts_with('indication'),
     starts_with('icd9'), 
-    starts_with('sponsor_company'), starts_with('collaborator_company'),
-    #starts_with('biomarker_id'), starts_with('biomarker_name'), starts_with('biomarker_role'),
     starts_with('trial_endpoint'), starts_with('trial_design'),
     starts_with('malignant_not_specified'),
     everything()
@@ -102,8 +123,20 @@ data <-
   mutate_if(is.logical, as.numeric) %>% 
   arrange(trial_id)
 
-save(file = 'data/clinical_trials_08-27-17.RData', data) 
-write_csv(data, 'data/clinical_trials_08-27-17.csv') 
-write_dta(data, 'data/clinical_trials_08-27-17.dta', version = 12) 
+data_firms <- 
+  firms_wide %>% 
+  select(trial_id, starts_with('s'), starts_with('c')) %>%
+  mutate_at(vars(contains('public')), as.integer) %>% 
+  mutate_at(vars(contains('ipo_date')), function(col) as_date(col)) 
+  
+# Export data
+save(file = 'data/clinical_trials_09-20-17.RData', data) 
+save(file = 'data/firm_data_09-20-17.RData', data_firms) 
+ 
+write_dta(data,       'data/clinical_trials_09-20-17.dta', version = 12)
+write_dta(data_firms, 'data/firm_data_09-20-17.dta',       version = 12) 
+
+# write_csv(data, 'data/clinical_trials_08-27-17.csv') 
+# write_dta(data, 'data/clinical_trials_08-27-17.dta', version = 12) 
 
 

@@ -23,13 +23,15 @@ end
 *Trial count by phase
 cap program drop trial_count_by_phase
 program define trial_count_by_phase
-	syntax, ///
+	syntax [if], ///
 	[figure_path(string)] ///
 	[title(string)] ///
 	[ylabel(string)]
 
 	preserve
 	*Count number of trials by year and phase
+	if "`if'" != "" keep `if'
+
 	collapse (sum) phase_1 phase_2 phase_3, by(year_start) 
 	
 	*Default y-axis options
@@ -54,14 +56,15 @@ end
 *Trial growth by phase
 cap program drop trial_growth_by_phase
 program define trial_growth_by_phase
-	syntax, ///
+	syntax [if], ///
 	[figure_path(string)] ///
 	[title(string)] ///
 	[ylabel(string)]
 
 
 	preserve
-	
+	if "`if'" != "" keep `if'
+
 	*Count number of trials by year and phase
 	collapse (sum) phase_1 phase_2 phase_3, by(year_start) 
 		
@@ -101,14 +104,15 @@ end
 *Share of trials by biomarker use
 cap program drop trial_share_by_phase
 program define trial_share_by_phase	
-	syntax, ///
+	syntax [if], ///
 	var(string) ///
 	[figure_path(string)] ///
 	[title(string)] ///
 	[ylabel(string)]
 
 	preserve
-	
+	if "`if'" != "" keep `if'
+
 	prep_phases
 	collapse (mean) `var', by(year_start phase) 
 	replace `var' = `var' * 100
@@ -138,12 +142,13 @@ end
 
 cap program drop trial_count_by_type
 program define trial_count_by_type
-	syntax, ///
+	syntax [if], ///
 	[figure_path(string)] ///
 	[title(string)] ///
 	[ylabel(string)]
 
 	preserve
+	if "`if'" != "" keep `if'
 
 	collapse (sum)  *_type , by(year_start) 
 
@@ -179,69 +184,6 @@ program define trial_count_by_type
 
 	restore
 end
-
-
-**The following program is in development
-/*
-
-cap program drop trial_duration_by_yr_phase
-program define trial_duration_by_yr_phase
-	syntax, ///
-	[figure_path(string)] [table_path(string)] ///
-	[title(string)]
-		
-	preserve
-	
-	/*
-	local first_year 2000 
-	local last_year 2016
-	keep if year_end >= `first_year' & year_end <= `last_year'
-	*/
-	prep_phases
-
-	if "`title'" == "" local title "Average trial duration in months by trial phase"				
-
-	*Plot
-	quietly reg duration i.year_end##i.phase
-	quietly margins, over(year_end phase) post
-	marginsplot, ///
-		title("`title'") ///
-		xlabel(2000(5)2015) ///
-		ylabel(18(6)42) ///
-		xtitle("Trial end year") ///
-		ytitle("Trial duration in months") 
-	if "`figure_path'" != "" graph export "`figure_path'", replace
-
-	*Table
-	if "`table_path'" != "" local write_tex "using `table_path'"
-	
-	foreach year of numlist `first_year'/`last_year' {
-	local i = `year' - `first_year' + 1
-	local labels `labels' _subpop_`i' `year'
-	}
-
-	eststo A: quietly mean duration, over(year_end)
-	eststo B: quietly mean duration if phase == 1, over(year_end)
-	eststo C: quietly mean duration if phase == 2, over(year_end)
-	eststo D: quietly mean duration if phase == 3, over(year_end)
-
-	label variable duration " "
-	if "`table_path'" != "" local write_tex "using `table_path'"
-	esttab A B C D	`write_tex', ///
-			coeflabels(`labels') not nostar nonum ///
-			replace ///
-			label ///
-			cells("_N(fmt(%8.0gc)) b(fmt(1))") ///
-			title("`title'") ///
-			collabels("Number of trials" "Average duration", lhs("End year")) ///
-			mtitles("All trials with start and end dates" ///
-				"Phase I" ///
-				"Phase II" ///
-				"Phase III" ///
-				) 	
-	restore	
-end
-
 
 
 

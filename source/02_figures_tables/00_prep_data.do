@@ -1,19 +1,19 @@
-***********************************************************
-** Author: Ben Berger; Date Created: 7-30-17              
-** This script:
-** 1. Loads the cortellis clinical trials data 
-** 2. Makes some small modifications to phase variables    
-** 3. Defines the universe of trials we are interested in
-** 4. Generates useful variables for analysis
-***********************************************************
+/*----------------------------------------------------------------------------*\
+	Author: Ben Berger; Date Created: 7-30-17              
+	This script:
+	1. Loads the cortellis clinical trials data 
+	2. Makes some small modifications to phase variables    
+	3. Defines the universe of trials we are interested in
+	4. Generates useful variables for analysis
+\*----------------------------------------------------------------------------*/
 
 set more off
 ***************************************************
 **** Load Data ************************************
 ***************************************************
-global trial_data "data/clinical_trials_08-27-17.dta"
+global trial_data "data/clinical_trials_09-20-17.dta"
 //global trial_data_sample "data/ct_sample.dta"
-global biomarker_data "data/biomarker_data_08-13-17.dta"
+global biomarker_data "data/biomarker_data.dta"
 
 **Write a sample to disk for testing code
 /*
@@ -135,6 +135,48 @@ foreach var of varlist `collapse_vars' biomarker_status  {
 	replace `var' = 0 if biomarker_status == .
 }
 
+* Use firm data to generate trial-level summary variables 
+preserve
+
+use "data/firm_data_09-20-17.dta", clear
+
+* Indicate whether any sponsor/collaborator ancestor is public firm
+
+foreach firm_role in sponsor collaborator {
+	
+	if "`firm_role'" == "sponsor" local abb s
+	if "`firm_role'" == "collaborator" local abb c
+
+	* Check whether trial sponsor is publicly listed
+	cap drop `firm_role'_public
+	egen `firm_role'_public = anymatch(`abb'_public_*), values(1)
+	replace `firm_role'_public = . if `abb'_public_001 == . 
+	* Then its ancestor
+	cap drop `firm_role'_public_ancestor
+	egen `firm_role'_public_ancestor = anymatch(`abb'_ancestor_public_*), values(1)
+	replace `firm_role'_public_ancestor = . if `abb'_ancestor_public_001 == . 
+
+	* Then take the maximum of the two 
+	/* Note: Some companies are listed as public while their ancestors are private! */
+	cap drop `firm_role'_public_max 
+	egen `firm_role'_public_max = rowmax(`firm_role'_public*) 
+
+	/*
+	drop sponsor_public sponsor_public_ancestor
+	rename sponsor_public_max sponsor_public
+	*/	
+}
+
+keep trial_id *_public* 
+
+tempfile temp1
+save "`temp1'" 
+
+restore
+merge 1:1 trial_id using "`temp1'"
+drop if _merge == 2
+drop _merge
+
 ***************************************************
 **** Generate useful variables ********************
 ***************************************************
@@ -250,7 +292,7 @@ lab var cellular_type 		"Biomarker type: cellular"
 lab var genomic_type 		"Biomarker type: genomic"
 lab var physiological_type 	"Biomarker type: physiological"
 lab var proteomic_type 		"Biomarker type: proteomic"
-lab var structural_type 		"Biomarker type: structural (imaging)"
+lab var structural_type 	"Biomarker type: structural (imaging)"
 
 lab var most_common_chapter 	"Most common ICD-9 chapter"
 

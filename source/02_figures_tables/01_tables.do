@@ -1,17 +1,28 @@
-***********************************************************
-** Author: Ben Berger; Date Created: 7-30-17              
-** This script:
-** 1. Runs programs to generate tables
-***********************************************************
+/*----------------------------------------------------------------------------*\
+
+	Author: Ben Berger; Date Created: 7-30-17              
+	This script runs programs (from tables_fns.do) to generate tables
+	
+\*----------------------------------------------------------------------------*/
 
 set more off
 use "data/prepared_trials.dta", clear
 
-***************************************************
-**** Generate figures and tables ******************
-***************************************************
+**Load table programs
+do "source/02_figures_tables/tables_fns.do"
 
-**Define directory for reports
+
+/*----------------------------------------------------------------------------*\
+
+
+
+	Generate figures and tables
+
+
+	
+\*----------------------------------------------------------------------------*/
+
+**Define directory for current report
 set more off
 local report_dir "reports/report_08-29-17"
 local table_dir "`report_dir'/tables"
@@ -20,13 +31,6 @@ foreach dir in `report_dir' `table_dir' `figure_dir' {
 	!mkdir "`dir'"
 }
 
-**Load table programs
-do "source/02_figures_tables/tables_fns.do"
-
-********************************************************************************
-********************************************************************************
-********************************************************************************
-********************************************************************************
 *Table 1
 summary_stats, table_path("`table_dir'/01-summary_stats.tex")
 *Table 2
@@ -118,15 +122,15 @@ nih_funding_by_ppm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	
 
 preserve
 keep if us_trial == 1
-*Table 2
+*Table A2
 bmkrtype_count,	title("Number of US trials employing biomarkers by type") ///
 		table_path("`table_dir'/A02-bmkrtype_count_us.tex")
-*Table 3
+*Table A3
 bmkrdrole_count,title("Number of US trials employing biomarkers by detailed role") ///
 		table_path("`table_dir'/A03-bmkrdrole_count_us.tex")
 restore
 
-*Table 5
+*Table A5
 preserve
 keep if neoplasm == 1 & us_trial == 1
 ppm_count_and_share, 	ppm(g_ppm) 							///
@@ -142,7 +146,7 @@ ppm_count_and_share, 	ppm(r_ppm) 							///
 			table_path("`table_dir'/A05b-ppm_count_and_share_cancer_us.tex") 
 restore
 
-*Table 6
+*Table A6
 preserve
 keep if neoplasm == 0 & us_trial == 1
 ppm_count_and_share, 	ppm(g_ppm) 							///
@@ -159,60 +163,12 @@ restore
 
 
 
-/*
-**Run programs to generate tables/figures
-*Table 1
-summary_stats, table_path("`table_dir'/01-summary_stats.tex")
-
-*Table 9 
-nih_funding_by_phase, table_path("`table_dir'/09-nih_funding_by_phase.tex")
-
-*Figure 1a
-trial_count_by_phase, figure_path("`figure_dir'/01a-trial_count_by_phase.eps")
-*Figure 1b
-trial_growth_by_phase, figure_path("`figure_dir'/01b-trial_growth_by_phase.eps")
-
-*Figure 2a
-preserve
-keep if biomarker_status == 1
-trial_count_by_phase, ///
-	figure_path("`figure_dir'/02a-trial_count_by_phase_withbmkr.eps") ///
-	title("Number of registered Phase I-III trials using biomarkers (1995-2016)")
-restore
-*Figure 2b
-trial_share_withbmkr_by_phase, figure_path("`figure_dir'/02b-trial_share_withbmkr_by_phase.eps")
-
-*Figure 9a
-nih_funding_by_yr_phase , figure_path("`figure_dir'/09a-nih_funding_by_yr_phase.eps")
 
 
 
 
 
 
-/*
-nih_funding_by_bmkr, 		table_path("`table_dir'/01-nih_funding_by_bmkr.tex")
-nih_funding_by_bmkr_us, 	table_path("`table_dir'/fragment-02-nih_funding_by_bmkr_us.tex")
-nih_funding_by_bmkr_phase, 	table_path("`table_dir'/fragment-03-nih_funding_by_bmkr_phase.tex")
-nih_funding_by_bmkrrole, 	table_path("`table_dir'/04-nih_funding_by_bmkrrole.tex")
-trial_phase, 			table_path("`table_dir'/05-trial_phase.tex")
-trial_duration_by_yr, 		table_path("`table_dir'/06-trial_duration_by_yr.tex") ///
-					figure_path("`figure_dir'/06-trial_duration_by_yr.eps")
-nih_funding_means, 		table_path("`table_dir'/07-nih_funding_means.tex")
-trial_duration_by_yr_phase, 	figure_path("`figure_dir'/05-trial_duration_by_yr_phase.eps")
-trial_duration_by_yr_bmkr, 	table_path("`table_dir'/11-trial_duration_by_yr_bmkr.tex") ///
-					figure_path("`figure_dir'/04-trial_duration_by_yr_bmkr.eps")
-nih_funding_by_yr_bmkr, 	table_path("`table_dir'/08-nih_funding_by_yr_bmkr.tex") ///
-					figure_path("`figure_dir'/01-nih_funding_by_yr_bmkr.eps")
-
-preserve
-keep if us_trial == 1					
-nih_funding_by_yr_bmkr, 	table_path("`table_dir'/09-nih_funding_by_yr_bmkr_us.tex") ///
-					figure_path("`figure_dir'/02-nih_funding_by_yr_bmkr_us.eps")					
-restore
-					
-nih_funding_by_yr_phase, 	table_path("`table_dir'/10-nih_funding_by_yr_phase.tex") ///
-					figure_path("`figure_dir'/03-nih_funding_by_yr_phase.eps")
 
 
 

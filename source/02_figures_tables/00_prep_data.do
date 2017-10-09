@@ -3,8 +3,10 @@
 	This script:
 	1. Loads the cortellis clinical trials data 
 	2. Makes some small modifications to phase variables    
-	3. Defines the universe of trials we are interested in
-	4. Generates useful variables for analysis
+	3. Merges biomarker data; defining PPM trials
+	4. Merges firm data; constructing useful public firm indicators
+	5. Generates useful variables for analysis
+	6. Writes to file "data/prepared_trials.dta"
 \*----------------------------------------------------------------------------*/
 
 set more off
@@ -43,7 +45,9 @@ count if phase_2 == 1 & phase_3 == 1
 assert `r(N)' == 0
 
 
-**Load biomarker data
+/****************************************
+	PROCESS BIOMARKER DATA
+*****************************************/
 preserve
 use $biomarker_data, clear
 
@@ -135,39 +139,83 @@ foreach var of varlist `collapse_vars' biomarker_status  {
 	replace `var' = 0 if biomarker_status == .
 }
 
-* Use firm data to generate trial-level summary variables 
-preserve
+/****************************************
+	PROCESS FIRM DATA
+*****************************************/					
 
+* Save trial dates to merge into firm data
+preserve
+keep trial_id date_start
+tempfile dates
+save "`dates'"
+* Load firm data
 use "data/firm_data_09-20-17.dta", clear
+merge 1:1 trial_id using "`dates'"
+drop if _merge == 2
+drop _merge
 
 * Indicate whether any sponsor/collaborator ancestor is public firm
-
 foreach firm_role in sponsor collaborator {
 	
 	if "`firm_role'" == "sponsor" local abb s
 	if "`firm_role'" == "collaborator" local abb c
+	
+	* Replace public indicator if IPO at later date than trial
+	foreach var of varlist `abb'_public_* {
+	
+	local var_index = substr("`var'", 10, 3)
+	
+	replace `var' = 0 if ///
+		`abb'_ipo_date_`var_index' > date_start ///
+		& `abb'_ipo_date_`var_index' != . ///
+		& date_start != .	
+	}
+	
+	/* Same for ancestors
+	Note Ben 10-9: 
+	figure out a clever way to do this all in 1 loop */
+	foreach var of varlist `abb'_ancestor_public_* {
+	
+	local var_index = substr("`var'", 19, 3)
+	
+	replace `var' = 0 if ///
+		`abb'_ancestor_ipo_date_`var_index' > date_start ///
+		& `abb'_ancestor_ipo_date_`var_index' != . ///
+		& date_start != .	
+	}
 
-	* Check whether trial sponsor is publicly listed
+	
+	
+	* Check whether trial sponsors or collaborators are publicly listed
 	cap drop `firm_role'_public
 	egen `firm_role'_public = anymatch(`abb'_public_*), values(1)
-	replace `firm_role'_public = . if `abb'_public_001 == . 
-	* Then its ancestor
+	
+	cap drop public_missing 
+	egen public_missing = anymatch(`abb'_public_*), values(0 1)
+	replace public_missing = 1 - public_missing
+	replace `firm_role'_public = . if public_missing == 1	
+	
+	
+	* Then do the same for their ancestors
 	cap drop `firm_role'_public_ancestor
 	egen `firm_role'_public_ancestor = anymatch(`abb'_ancestor_public_*), values(1)
-	replace `firm_role'_public_ancestor = . if `abb'_ancestor_public_001 == . 
-
-	* Then take the maximum of the two 
-	/* Note: Some companies are listed as public while their ancestors are private! */
+	
+	cap drop public_missing 
+	egen public_missing = anymatch(`abb'_ancestor_public_*), values(0 1)
+	replace public_missing = 1 - public_missing
+	replace `firm_role'_public_ancestor = . if public_missing == 1
+	
+	*  Then take the maximum of the two
 	cap drop `firm_role'_public_max 
 	egen `firm_role'_public_max = rowmax(`firm_role'_public*) 
 
-	/*
-	drop sponsor_public sponsor_public_ancestor
-	rename sponsor_public_max sponsor_public
-	*/	
+	/*This corresponds to at least one public company OR company w/ public ancestor
+	Note: Some companies are listed as public while their ancestors are private! */
+	
 }
 
-keep trial_id *_public* 
+
+keep trial_id sponsor_public* collaborator_public_*
 
 tempfile temp1
 save "`temp1'" 
@@ -197,11 +245,13 @@ foreach var of varlist icd9_chapter_* {
 	replace neoplasm = 1 if `var' == "Neoplasms"
 }
 
-**Most common icd-9 chapter
-//******************************//
-/* Takes 10+ minutes
+/****************************************
+	MOST COMMON ICD-9 CHAPTER
+*****************************************/
+/* NOTE: Takes 10+ minutes
 Comment out below until the merge command 
 to read tempfile from disk      */
+
 /*
 preserve
 keep trial_id icd9_chapter_*
@@ -308,7 +358,7 @@ keep if year_start >= 1995 & year_start <= 2016
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
 drop phase_4
 
-save "data/prepared_trials.dta", replace
+*save "data/prepared_trials.dta", replace
 
 
 

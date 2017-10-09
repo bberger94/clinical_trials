@@ -28,9 +28,9 @@ do "source/02_figures_tables/figures_fns.do"
 ********************************************************************************
 ********************************************************************************
 ********************************************************************************
-set scheme s1mono
+//set scheme s1mono
 
-
+/*
 *Figure 1a
 trial_count_by_phase, figure_path("`figure_dir'/01a-trial_count_by_phase.eps")
 *Figure 1b 
@@ -382,9 +382,9 @@ trial_share_by_phase if neoplasm == 0 & us_trial == 1, var(r_ppm) ///
 	ylabel("ylabel(0(.5)5, angle(0))") ///
 	figure_path("`figure_dir'/A06d-r_ppm_share_by_phase_noncancer_us.eps")
 
+*/
 
-
-/* In development
+/* In development */
 
 trial_count_by_phase if sponsor_public_ancestor == 1 & year_start >= 2010, ///
 	title("Number of registered trials by phase: public sponsor firms") 

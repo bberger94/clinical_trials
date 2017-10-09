@@ -392,9 +392,34 @@ trial_count_by_phase if sponsor_public_ancestor == 1 & year_start >= 2010, ///
 trial_share_by_phase, var(sponsor_public_max) title("Share of trials sponsored by public firm or firm with public ancestor")
 trial_share_by_phase, var(sponsor_public) title("Share of trials sponsored by public firm")
 
-
 trial_share_by_phase if sponsor_public_ancestor == 0, var(r_ppm) ylabel("ylabel(0(1)10, angle(0))")
 trial_share_by_phase if sponsor_public_ancestor == 1, var(r_ppm) ylabel("ylabel(0(1)10, angle(0))")
+
+
+
+* Bounded shares (need titles)
+bounded_share if year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max)
+bounded_share if neoplasm == 1 & g_ppm == 1 & year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max)
+
+
+* Bounded counts
+set more off
+bounded_count if year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max) ///
+	ylabel(ylabel(0(100)1500, angle(0))) ///
+	title("Bounded count of trials with public sponsors") 
+
+bounded_count if year_start >= 2005 & neoplasm == 1, lb(sponsor_public) ub(sponsor_public_max) ///
+	ylabel(ylabel(0(100)500, angle(0))) ///
+	title("Bounded count of cancer trials with public sponsors") 
+
+bounded_count if year_start >= 2005 & neoplasm == 1 & g_ppm == 1, lb(sponsor_public) ub(sponsor_public_max) ///
+	ylabel(ylabel(0(20)150, angle(0))) ///
+	xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+	title("Bounded count of generous PPM cancer trials with public sponsors") 
+
+
+
+
 
 
 

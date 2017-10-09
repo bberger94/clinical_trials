@@ -173,7 +173,7 @@ foreach firm_role in sponsor collaborator {
 	
 	/* Same for ancestors
 	Note Ben 10-9: 
-	figure out a clever way to do this all in 1 loop */
+	figure out a clever way to do this all in one loop */
 	foreach var of varlist `abb'_ancestor_public_* {
 	
 	local var_index = substr("`var'", 19, 3)
@@ -215,7 +215,7 @@ foreach firm_role in sponsor collaborator {
 }
 
 
-keep trial_id sponsor_public* collaborator_public_*
+keep trial_id sponsor_public* collaborator_public*
 
 tempfile temp1
 save "`temp1'" 
@@ -307,6 +307,16 @@ lab var neoplasm "Drug indication for neoplasm"
 lab var g_ppm "Generous PPM" 
 lab var r_ppm "Restrictive PPM" 
 
+*Firm public/non-public
+lab var sponsor_public 			"At least one sponsor is public firm"
+lab var sponsor_public_ancestor		"At least one sponsor has public ancestor"
+lab var sponsor_public_max		"At least one sponsor is public or has public ancestor"
+
+lab var collaborator_public		"At least one collaborator is public firm"
+lab var collaborator_public_ancestor	"At least one collaborator has public ancestor"
+lab var collaborator_public_max		"At least one collaborator is public or has public ancestor"
+
+
 *Coarse Roles
 lab var therapeutic_marker_role "Biomarker role: therapeutic effect"
 lab var disease_marker_role "Biomarker role: disease"
@@ -349,7 +359,8 @@ lab var most_common_chapter 	"Most common ICD-9 chapter"
 order trial_id date* year* duration ///
 	phase* us_trial neoplasm nih_funding ///
 	recruitment_status patient_count_enrollment ///
-	biomarker_status *_ppm *_drole *_type *_role most_common_chapter
+	sponsor* collaborator* ///
+	biomarker_status *_ppm *_drole *_type *_role most_common_chapter 
 	       
 ***************************************************
 **** Select universe of trials ********************
@@ -358,7 +369,7 @@ keep if year_start >= 1995 & year_start <= 2016
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
 drop phase_4
 
-*save "data/prepared_trials.dta", replace
+save "data/prepared_trials.dta", replace
 
 
 

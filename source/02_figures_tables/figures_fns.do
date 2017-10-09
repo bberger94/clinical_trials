@@ -187,10 +187,99 @@ end
 
 
 
+*Bounded share of trials (used for bounded public firm shares)
+cap program drop bounded_share
+program define bounded_share
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	prep_phases
+	collapse (mean) `lb' `ub', by(year_start phase) 
+	replace `lb' = `lb' * 100
+	replace `ub' = `ub' * 100
+	reshape wide `lb' `ub', i(year_start) j(phase)
+	
+	if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rarea `lb'1 `ub'1 year_start, fin(30) lw(none) color(navy) || ///
+		rarea `lb'2 `ub'2 year_start, fin(30) lw(none) color(maroon) || ///
+		rarea `lb'3 `ub'3 year_start, fin(30) lw(none) color(forest_green)  || ///
+		line  `lb'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `lb'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `lb'3  year_start, lp(dash) lcolor(forest_green) || ///
+		line  `ub'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `ub'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `ub'3  year_start, lp(dash) lcolor(forest_green)  ///
+		title("`title'", size(medium)) ///
+		ytitle("Share of trials (%)", size(medsmall))  ///
+		`ylabel' ///
+		xtitle("Start year") ///
+		legend(	order(1 2 3)  ///
+			lab(1 "Phase I") ///
+			lab(2 "Phase II") ///
+			lab(3 "Phase III") ///
+			rows(1) ///
+			) 
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
 
 
 
 
+* Bounded count of trials (consider changing visualization)
+cap program drop bounded_count
+program define bounded_count
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)] [xlabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	prep_phases
+	collapse (sum) `lb' `ub', by(year_start phase) 
+	gen x = year_start
+	replace x = x - .16 if phase == 1
+	replace x = x + .16 if phase == 3
+
+	reshape wide `lb' `ub' x, i(year_start) j(phase)
+	
+	
+	//if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rbar `lb'1 `ub'1 x1 , barwidth(.16)  || ///
+		rbar `lb'2 `ub'2 x2 , barwidth(.16)|| ///
+		rbar `lb'3 `ub'3 x3 , barwidth(.16) ///
+		title("`title'", size(medium)) ///
+		ytitle("Number of trials", size(medsmall))  ///
+		`ylabel' `xlabel' ///
+		xtitle("Start year") ///
+		legend(	order(1 2 3)  ///
+			lab(1 "Phase I") ///
+			lab(2 "Phase II") ///
+			lab(3 "Phase III") ///
+			rows(1) ///
+			) 
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
 
 
 

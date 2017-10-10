@@ -194,7 +194,7 @@ program define bounded_share
 	lb(string) ub(string) ///
 	[figure_path(string)] ///
 	[title(string)] ///
-	[ylabel(string)]
+	[ylabel(string)] [xlabel(string)]
 
 	preserve
 	if "`if'" != "" keep `if'
@@ -220,7 +220,7 @@ program define bounded_share
 		line  `ub'3  year_start, lp(dash) lcolor(forest_green)  ///
 		title("`title'", size(medium)) ///
 		ytitle("Share of trials (%)", size(medsmall))  ///
-		`ylabel' ///
+		`ylabel' `xlabel' ///
 		xtitle("Start year") ///
 		legend(	order(1 2 3)  ///
 			lab(1 "Phase I") ///

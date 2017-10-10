@@ -397,25 +397,67 @@ trial_share_by_phase if sponsor_public_ancestor == 1, var(r_ppm) ylabel("ylabel(
 
 
 
-* Bounded shares (need titles)
-bounded_share if year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max)
-bounded_share if neoplasm == 1 & g_ppm == 1 & year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max)
+
+cap drop any_public*
+gen any_public = sponsor_public == 1 | collaborator_public == 1
+gen any_public_max = sponsor_public_max == 1 | collaborator_public_max == 1
+
+* Bounded shares 
+bounded_share if year_start >= 2005, ///
+	lb(sponsor_public) ub(sponsor_public_max)  ///
+	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+	title("Share of trials with public firm sponsor") 
+
+bounded_share if year_start >= 2005, ///
+	lb(any_public) ub(any_public_max) ///
+	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+	title("Share of trials with public firm involvement") 
+
+* Bounded share (PPM)
+bounded_share if g_ppm == 1 & year_start >= 2005, ///
+	lb(sponsor_public) ub(sponsor_public_max) ///
+	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+	title("Share of generous PPM trials with public firm sponsor")
+	
+bounded_share if g_ppm == 1 & year_start >= 2005, ///
+	lb(any_public) ub(any_public_max) ///
+	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+	title("Share of generous PPM trials with public firm involvement")
 
 
 * Bounded counts
 set more off
 bounded_count if year_start >= 2005, lb(sponsor_public) ub(sponsor_public_max) ///
 	ylabel(ylabel(0(100)1500, angle(0))) ///
-	title("Bounded count of trials with public sponsors") 
+	xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+	title("Count of trials with public firm sponsor") 
+
+set more off
+bounded_count if year_start >= 2005, lb(any_public) ub(any_public_max) ///
+	ylabel(ylabel(0(100)1500, angle(0))) ///
+	xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+	title("Count of trials with public firm involvement") 
+
+
+
+
+/*
+
+
 
 bounded_count if year_start >= 2005 & neoplasm == 1, lb(sponsor_public) ub(sponsor_public_max) ///
 	ylabel(ylabel(0(100)500, angle(0))) ///
 	title("Bounded count of cancer trials with public sponsors") 
 
 bounded_count if year_start >= 2005 & neoplasm == 1 & g_ppm == 1, lb(sponsor_public) ub(sponsor_public_max) ///
-	ylabel(ylabel(0(20)150, angle(0))) ///
+	ylabel(ylabel(0(20)180, angle(0))) ///
 	xlabel(xlabel(2005(1)2016, angle(300)) ) ///
-	title("Bounded count of generous PPM cancer trials with public sponsors") 
+	title("Bounded count of generous PPM cancer trials with public firm sponsors") 
+
+bounded_count if year_start >= 2005 & neoplasm == 1 & g_ppm == 1, lb(any_public) ub(any_public_max) ///
+	ylabel(ylabel(0(20)180, angle(0))) ///
+	xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+	title("Bounded count of generous PPM cancer trials with public firm involvement") 
 
 
 

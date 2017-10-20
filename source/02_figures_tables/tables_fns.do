@@ -58,7 +58,7 @@ end
 *Biomarker type count
 cap program drop bmkrtype_count
 program define bmkrtype_count
-	syntax, ///
+	syntax [if], ///
 	[table_path(string)] ///
 	[title(string)]
 	
@@ -66,6 +66,8 @@ program define bmkrtype_count
 	estimates clear
 	preserve
 
+	*Subset by `if'
+	if "`if'" != "" keep `if'
 	*Get overall estimates
 	cap drop x
 	gen x = 1 
@@ -100,7 +102,7 @@ end
 *Biomarker detailed role count
 cap program drop bmkrdrole_count
 program define bmkrdrole_count
-	syntax, ///
+	syntax [if], ///
 	[table_path(string)] ///
 	[title(string)]
 	
@@ -108,6 +110,8 @@ program define bmkrdrole_count
 	estimates clear
 	preserve
 
+	*Subset by `if'
+	if "`if'" != "" keep `if'
 	*Get overall estimates
 	cap drop x
 	gen x = 1 
@@ -150,7 +154,7 @@ end
 
 cap program drop ppm_count_and_share
 program define ppm_count_and_share
-	syntax, ///
+	syntax [if], ///
 	ppm(string) ///
 	[table_path(string)] ///
 	[title(string)]
@@ -158,6 +162,10 @@ program define ppm_count_and_share
 
 
 	preserve
+	
+	*Subset by `if'
+	if "`if'" != "" keep `if'
+	
 	gen ppm_times100 = `ppm' * 100 
 	cap label drop year_labels
 
@@ -192,12 +200,16 @@ end
 *NIH funding by Phase
 cap program drop nih_funding_by_ppm_and_phase
 program define nih_funding_by_ppm_and_phase
-	syntax, ///
+	syntax [if], ///
 	[table_path(string)] ///
 	[title(string)] ///
 
 	estimates clear
 	preserve
+	
+	*Subset by `if'
+	if "`if'" != "" keep `if'
+	
 	cap label drop year_labels
 	
 	prep_phases

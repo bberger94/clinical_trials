@@ -13,9 +13,12 @@ set more off
 ***************************************************
 **** Load Data ************************************
 ***************************************************
-global trial_data "data/clinical_trials_09-20-17.dta"
+global trial_data "data/processed/clinical_trials_09-20-17.dta"
+global biomarker_data "data/processed/biomarker_data.dta"
+global firm_data "data/processed/firm_data_09-20-17.dta"
+
+
 //global trial_data_sample "data/ct_sample.dta"
-global biomarker_data "data/biomarker_data.dta"
 
 **Write a sample to disk for testing code
 /*
@@ -125,12 +128,12 @@ collapse (max) 	`collapse_vars' , ///
 		
 gen biomarker_status = 1
 
-!mkdir "data/temp" 
-save "data/temp/ppm_temp.dta", replace
+tempfile temp1
+save "`temp1'"
 
 *Merge biomarker data
 restore
-merge 1:1 trial_id using "data/temp/ppm_temp.dta"
+merge 1:1 trial_id using "`temp1'"
 drop if _merge == 2
 drop _merge
 
@@ -149,7 +152,7 @@ keep trial_id date_start
 tempfile dates
 save "`dates'"
 * Load firm data
-use "data/firm_data_09-20-17.dta", clear
+use $firm_data , clear
 merge 1:1 trial_id using "`dates'"
 drop if _merge == 2
 drop _merge
@@ -267,12 +270,14 @@ bys trial_id: egen most_common_chapter = mode(icd9_chapter), min
 collapse (firstnm) most_common_chapter  , by(trial_id)
 list in 1/20
 
-save "data/temp/icd9_modal_chapter.dta", replace
+save "data/cache/icd9_modal_chapter.dta", replace
 restore
 */
 
-merge 1:1 trial_id using "data/temp/icd9_modal_chapter.dta"
+
+merge 1:1 trial_id using "data/cache/icd9_modal_chapter.dta"
 drop _merge
+
 
 **Label variable values 
 cap label drop biomarker_label
@@ -369,7 +374,7 @@ keep if year_start >= 1995 & year_start <= 2016
 keep if phase_1 == 1 | phase_2 == 1 | phase_3 == 1
 drop phase_4
 
-save "data/prepared_trials.dta", replace
+save "data/processed/prepared_trials.dta", replace
 
 
 

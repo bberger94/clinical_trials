@@ -1,17 +1,22 @@
-********************************************************************************
-*  Name: regs.do		                                       
-*  Authors: Stern & Berger
-*
-********************************************************************************
+/*----------------------------------------------------------------------------*\
 
 
-clear
+	Authors: Ben Berger, Ariel Stern
+	This script: Runs regressions and outputs log files
+
+			
+\*----------------------------------------------------------------------------*/
+
+
+
 set more off
 global stars = " * 0.05 ** 0.01 *** 0.001"
 
-use data/prepared_trials.dta , clear
+use "data/processed/prepared_trials.dta" , clear
 
-********************************************************************************
+/*----------------------------------------------------------------------------*\
+	Display summary statistics
+\*----------------------------------------------------------------------------*/
 
 gen phase_23 = phase == "Phase 2/Phase 3 Clinical"
 	label var phase_23 "Phase 2/3 Clinical"
@@ -21,11 +26,13 @@ gen phase_2_only = phase_2 == 1 & phase_23==0
 lab var phase_2_only "Phase 2 only"
 gen phase_comb = phase == "Phase 2/Phase 3 Clinical" | phase == "Phase 1/Phase 2 Clinical"
 	label var phase_comb "Combined Phase Trial (1/2 or 2/3)"
-	sum phase_comb						/* 12.0 of all trails*/
+	sum phase_comb						/* 12.0 of all trials*/
 	sum phase_comb if us_trial ==1		/* 11.8 of US trials*/
 
+/*----------------------------------------------------------------------------*\
+	Winsorize duration to kill crazy outliers 
+\*----------------------------------------------------------------------------*/
 
-* Winsorize duration to kill crazy outliers 
 sum duration
 
 winsor2 duration, suffix(_w) cuts(1 99) 
@@ -33,7 +40,10 @@ winsor2 duration, suffix(_w) cuts(1 99)
 	
 	
 	
-********************************************************************************
+/*----------------------------------------------------------------------------*\
+	Define regression programs
+\*----------------------------------------------------------------------------*/
+
 set more off
 
 cap program drop ppm_regs
@@ -133,13 +143,14 @@ program define duration_regs
 	
 end
 
-*************************************************************************************
-******************* Make tables *****************************************************
-*************************************************************************************
+/*----------------------------------------------------------------------------*\
+	Run regression programs and log output
+\*----------------------------------------------------------------------------*/
 
-local output_dir "reports/regression_output_08-29-17"
+local output_dir "reports/regression_output_10-20-17"
 !mkdir `output_dir'
-log using "`output_dir'/regression_output_08-29-17.log", replace
+log using "`output_dir'/regression_output_10-20-17.log", replace
+
 
 * ------------------------------*
 * Main PPM regressions (Table 7)

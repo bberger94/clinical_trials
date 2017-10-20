@@ -1,2 +1,5 @@
 /data/
 /.old-data/
+.Rhistory
+.DS_Store
+.RData

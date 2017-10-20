@@ -1,40 +1,51 @@
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
-## 03_reshape_and_merge.R ; Author: Ben Berger;                              
+## 02_reshape_and_merge.R ; Author: Ben Berger;                              
 ##                                                                           
-## Takes parsed data in the long format produced by "02_parse_json.R",       
+## Takes parsed data in the long format produced by "01_parse_trial_json.R",       
 ## and reshapes them in the wide format with each row representing a unique trial                                                                     ##
 ##
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
 
-# Note BAB 9-14: Just ran 02_parse_trial_json.R ; try running this file now
-
-
+#Load packages
 library(dplyr)
 library(tidyr)
 library(haven)
 library(readr)
 library(lubridate)
 
-# Define function to reshape trial data long to wide
-my_reshape <- function(df) {
+## ------------------------------------------------------------------------------------------------ ##
+##  Define function to reshape trial data long to wide
+## ------------------------------------------------------------------------------------------------ ##
+# This function changes each data frame from long (index = trial_id-observation) to wide (index = trial_id).
+#
+# For each value of variable NAME within a trial, create a variable named NAME_XYZ where XYZ is 
+# a 3-digit number. The first variable is named NAME_001, then NAME_002, NAME_003 etc.
+#
+# If variable NAME has a single value within each trial is NOT named NAME_001, it is just named NAME. 
 
+my_reshape <- function(df) {
+  
+  # Function checks whether class of x is POSIXct (datetime)
   is.POSIXct <- function(x) 'POSIXct' %in% class(x)
   
   df %>% 
     group_by(trial_id) %>% 
+    # Mutate Date vars -> Character vars
     mutate_if(is.POSIXct, as.character.Date) %>% 
     mutate(i = 1:n()) %>% 
     mutate(i = as.character(sprintf("%03d", i))) %>% 
     ungroup %>% 
     select(trial_id, everything()) %>% 
     gather(key, value, -c(i, trial_id)) %>% 
-    group_by(key) %>% mutate(one_value = (all(i == '001'))) %>% ungroup %>%  #for each variable identify if only 1 value
+    # For each variable identify if only 1 value
+    group_by(key) %>% mutate(one_value = (all(i == '001'))) %>% ungroup %>% 
     unite(key_i, c(key, i)) %>% 
     mutate(key_i = replace( x = key_i,
                             list = one_value == TRUE,
-                            values = substr(key_i, 1, nchar(key_i) - 4) # if only 1 var value, remove trailing "_001"
+                            # If only 1 var value, remove trailing "_001"
+                            values = substr(key_i, 1, nchar(key_i) - 4) 
                             )
            ) %>% 
     select(-one_value) %>% 
@@ -42,8 +53,10 @@ my_reshape <- function(df) {
 }
 
 
-#Load long data (from 02_parse_trial_json)
-load('data/long_data.RData')
+## ------------------------------------------------------------------------------------------------ ##
+##  Load long data (from 01_parse_trial_json.R)
+## ------------------------------------------------------------------------------------------------ ##
+load('data/temp/long_data.RData')
 
 # Initialize a tibble with only non-json columns
 data_wide <-
@@ -58,8 +71,10 @@ firms_wide <-
   trials %>%
   select(trial_id) 
 
+## ------------------------------------------------------------------------------------------------ ##
+##  Reshape long dataframes wide and right join by trial_id 
+## ------------------------------------------------------------------------------------------------ ##
 
-# Reshape long dataframes wide and right join by trial_id 
 # First for just firm-level data
 longdata_names_firms <- c('sponsors_long', 'collaborators_long')
 for(longdata in longdata_names_firms){
@@ -76,6 +91,10 @@ for(longdata in longdata_names_nofirms ){
   data_wide <- longdata %>% my_reshape %>% right_join(data_wide, by = 'trial_id')
 }
 
+
+## ------------------------------------------------------------------------------------------------ ##
+##  Clean data
+## ------------------------------------------------------------------------------------------------ ##
 
 #Make phase indicators; indicator of biomarker presence
 data_wide <- 
@@ -103,15 +122,10 @@ data <-
     date_end,
     date_end_type,
     starts_with('phase'),
-    #biomarker_status, 
     us_trial,
     nih_funding,
     patient_count_enrollment,
     recruitment_status,
-    # disease_marker_role = disease_marker_001,
-    # toxic_marker_role = toxic_marker_001,
-    # therapeutic_marker_role = therapeutic_marker_001,
-    # not_determined_marker_role = not_determined_marker_001,
     starts_with('indication'),
     starts_with('icd9'), 
     starts_with('trial_endpoint'), starts_with('trial_design'),
@@ -128,15 +142,26 @@ data_firms <-
   select(trial_id, starts_with('s'), starts_with('c')) %>%
   mutate_at(vars(contains('public')), as.integer) %>% 
   mutate_at(vars(contains('ipo_date')), function(col) as_date(col)) 
-  
-# Export data
-save(file = 'data/clinical_trials_09-20-17.RData', data) 
-save(file = 'data/firm_data_09-20-17.RData', data_firms) 
- 
-write_dta(data,       'data/clinical_trials_09-20-17.dta', version = 12)
-write_dta(data_firms, 'data/firm_data_09-20-17.dta',       version = 12) 
 
-# write_csv(data, 'data/clinical_trials_08-27-17.csv') 
-# write_dta(data, 'data/clinical_trials_08-27-17.dta', version = 12) 
+## ------------------------------------------------------------------------------------------------ ##
+##  Export data; saving firm data separately
+## ------------------------------------------------------------------------------------------------ ##
+save(file = 'data/processed/clinical_trials_09-20-17.RData', data) 
+save(file = 'data/processed/firm_data_09-20-17.RData', data_firms) 
+ 
+write_dta(data,       'data/processed/clinical_trials_09-20-17.dta', version = 12)
+write_dta(data_firms, 'data/processed/firm_data_09-20-17.dta',       version = 12) 
+
+
+
+
+
+
+
+
+
+
+
+
 
 

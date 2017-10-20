@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
-## 03_companies.R ; Author: Ben Berger;                               
+## 01_company_ancestors.R ; Author: Ben Berger;                               
 ##
 ## Joins company "ancestor" data to company data.
 ##
@@ -13,7 +13,7 @@ library(readr)
 library(haven)
 
 data <-
-  read_csv(file = 'data/companies.csv',
+  read_csv(file = 'data/raw/companies.csv',
            col_types =  cols(cortellis_id = col_character())
            )
 
@@ -21,7 +21,6 @@ data <-
 companies <-
   data %>% 
   select(cortellis_id, cortellis_name, permid, ancestor_name, public, ipo_date, permid_name)
-
 
 # We exploit the fact that ancestors are just a subset of all companies
 # Make data frame of all potential ancestors (this is the same as companies, but with different variable names)
@@ -38,12 +37,6 @@ ancestor_data <-
 
 # Write to disk
 save(ancestor_data, file = 'data/temp/companies_mergedAncestors.RData')
-
-
-
-# write_dta(ancestor_data, path = 'data/companies_mergedAncestors.dta')
-
-
 
 
 

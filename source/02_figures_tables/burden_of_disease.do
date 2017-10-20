@@ -13,7 +13,8 @@ set more off
 ************************************
 * Prepare burden of disease data
 ************************************
-import excel "data/fwcancertables/Cancer_all_ages_US_cleaned-BB.xlsx", sheet("with icd9") first clear
+local US_or_global global //US
+import excel "data/fwcancertables/Cancer_all_ages_`US_or_global'_cleaned-BB.xlsx", sheet("with icd9") first clear
 keep icd9 cancer_type total
 rename total yll
 * Total years of life lost by ICD-9 

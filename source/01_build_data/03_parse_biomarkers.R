@@ -12,7 +12,6 @@
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
 
-
 ## Load packages 
 library(dplyr) 
 library(rlang)
@@ -34,7 +33,7 @@ load('data/temp/trial_biomarkers.RData')
 load('data/temp/indications_long.RData')
 
 # Load detailed biomarker role data
-biomarker_uses <- read_csv('data/July 31 Update/biomarker_uses.csv') 
+biomarker_uses <- read_csv('data/raw/biomarker_uses.csv') 
 roles <- 
   biomarker_uses %>% 
   select(biomarker_use_id,
@@ -76,7 +75,7 @@ biomarkers_indications <-
   select(trial_id, indication_id, biomarker_id,  everything() ) 
 
 # Match biomarker type data
-biomarker_types <- read_csv('data/July 31 Update/biomarkers.csv')
+biomarker_types <- read_csv('data/raw/biomarkers.csv')
 types <- 
   biomarker_types %>%
   my_expand(id, BiomarkerTypes) %>% 
@@ -106,9 +105,14 @@ biomarker_data <-
   left_join(types, by = 'biomarker_id')
 
 # Write to file
-save(file = 'data/biomarker_data.RData', biomarker_data)
-# write_csv(biomarker_data, 'data/biomarker_data_08-13-17.csv')
-write_dta(biomarker_data, 'data/biomarker_data.dta', version = 12)
+save(file = 'data/processed/biomarker_data.RData', biomarker_data)
+write_dta(biomarker_data, 'data/processed/biomarker_data.dta', version = 12)
+
+
+
+
+
+
 
 
 

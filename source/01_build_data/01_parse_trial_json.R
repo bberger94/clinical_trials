@@ -1,17 +1,10 @@
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
-## 02_parse_trials.R ; Author: Ben Berger;                               
+## 01_parse_trial_json.R ; Author: Ben Berger;                               
 ## Modified from script by Andrew Marder:                              
 ##
 ## Parses JSON columns from trials.csv (from cortellis API) as dataframes in long form. 
 ## 
-##
-## Original notes from AM:                                             
-## I've written a function called `my_expand` to make working with the 
-## trials data a little bit easier. The `get_name`, `assert`, and      
-## `json_to_dataframe` functions are helper functions that I used to   
-## write the `my_expand` function.                                     
-##
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
 
@@ -31,22 +24,16 @@ source('source/01_build_data/00_build_functions.R')
 ## ------------------------------------------------------------------------------------------------ ##
 ##  Load data
 ## ------------------------------------------------------------------------------------------------ ##
-
-## Read in data
 options(stringsAsFactors = FALSE)
 
 # Uncomment line below to load data without building from scratch
-load('data/long_data.RData')
+#load('data/long_data.RData')
 
-# Uncomment lines below to build from scratch
-# in.data <- read_csv('data/trials.csv')
-# nih_activity_codes <- read_csv('data/nih_activity_codes.csv')
-# icd9_xwalk <- read_csv('data/Cortellis_Drug_Indication_ICD9_Crosswalk_Validated.csv')
-# load('data/temp/companies_mergedAncestors.RData')
-
-# in.data <- read_csv('/Users/BBerger/Dropbox/Files_ClinTrials_Data/trials.csv')
-# in.data <- read_csv('../Files_ClinTrials_Data/trials.csv')
-# icd9_xwalk <- read_csv('../bkthruWork_local/indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_Validated.csv')
+# Uncomment lines below to build data from scratch
+in.data <- read_csv('data/raw/trials.csv')
+nih_activity_codes <- read_csv('data/misc/nih_activity_codes.csv')
+icd9_xwalk <- read_csv('../indicationXwalk/data/Cortellis_Drug_Indication_ICD9_Crosswalk_Validated_10-17-17.csv')
+load('data/temp/companies_mergedAncestors.RData')
 
 
 ## Pick sample index to test functions
@@ -56,10 +43,8 @@ sample_index <- sample(nrow(in.data), 1000)
 ## Save dataframe of trials
 trials <-
   in.data %>%
-  #slice(sample_index) %>% #uncomment to test code on sample
   rename(trial_id = id) %>% 
   arrange(trial_id)
-
 
 
 ## ------------------------------------------------------------------------------------------------ ##
@@ -69,7 +54,9 @@ trials <-
 ## ------------------------------------------------------------------------------------------------ ##
 ## ------------------------------------------------------------------------------------------------ ##
 
-# Companies
+## ------------------------------------------------------------------------------------------------ ##
+##  Firms
+## ------------------------------------------------------------------------------------------------ ##
 collaborators_long <-
   trials %>%
   my_expand(trial_id, CompaniesCollaborator) %>%
@@ -92,7 +79,9 @@ logical <- names(sponsors_long) != 'trial_id' & grepl('sponsor', names(sponsors_
 names(sponsors_long)[logical] <- paste0('s_', names(sponsors_long)[logical])
 
 
-# Indications and ICD-9 codes
+## ------------------------------------------------------------------------------------------------ ##
+##  Indications and ICD-9 codes
+## ------------------------------------------------------------------------------------------------ ##
 indications_long <-
   trials %>%
   my_expand(trial_id, Indications) %>%
@@ -104,7 +93,9 @@ icd9_long <-
   left_join(icd9_xwalk, by = c('indication_name' = 'cortellis_condition')) %>% 
   select(trial_id, starts_with('icd9'), malignant_not_specified)
 
-# Trial Identifiers and NIH funding
+## ------------------------------------------------------------------------------------------------ ##
+##  Trial Identifiers and NIH funding
+## ------------------------------------------------------------------------------------------------ ##
 identifiers_long <-
   trials %>% 
   my_expand(trial_id, Identifiers) %>% 
@@ -119,14 +110,20 @@ nih_long <-
   group_by(trial_id) %>% 
   summarize(nih_funding = any(nih_funding)
             )
-# End dates
+
+## ------------------------------------------------------------------------------------------------ ##
+##  End dates
+## ------------------------------------------------------------------------------------------------ ##
 date_ends_long <- 
   trials %>% 
   my_expand(trial_id, DateEnd) %>% 
   rename(date_end_type = `@type`,
          date_end = `$`
          )
-# Trial design, endpoints, recruitment status
+
+## ------------------------------------------------------------------------------------------------ ##
+##  Trial design, endpoints, recruitment status
+## ------------------------------------------------------------------------------------------------ ##
 trial_design_long <- 
   trials %>% 
   my_expand(trial_id, TermsDesign) %>% 
@@ -143,12 +140,13 @@ trial_recruitment_long <-
   rename(recruitment_status = `$`) %>% 
   select(-`@id`)
 
-# Trial location (US v. non-US)
+## ------------------------------------------------------------------------------------------------ ##
+##  Trial location (US v. non-US)
+## ------------------------------------------------------------------------------------------------ ##
 #note: us_trial == TRUE when the US is listed as a trial site, and FALSE when it is not AND another country IS
 #trials in which no site is listed with location in the trials data do NOT appear in us_trials_long
 us_trials_long <- 
   trials %>%
-  #slice(166378) %>% 
   my_expand(trial_id, SitesByCountries) %>% 
   mutate(us_trial = (country == 'US')) %>% 
   ungroup %>% group_by(trial_id) %>% 
@@ -177,7 +175,7 @@ trial_biomarkers <-
 
 
 
-save.image(file = 'data/long_data.RData')
+save.image(file = 'data/temp/long_data.RData')
 save(trial_biomarkers, file = 'data/temp/trial_biomarkers.RData')
 save(indications_long, file = 'data/temp/indications_long.RData')
 

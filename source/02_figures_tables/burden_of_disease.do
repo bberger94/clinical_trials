@@ -8,26 +8,40 @@
 ** 5. Compares years of life lost between PPM and non-PPM trials
 ********************************************************************************
 
+
 set more off
 
 ************************************
 * Prepare burden of disease data
 ************************************
-local US_or_global global //US
-import excel "data/fwcancertables/Cancer_all_ages_`US_or_global'_cleaned-BB.xlsx", sheet("with icd9") first clear
+foreach US_or_global in "US" "global" {
+
+import excel "data/misc/burden_of_disease/Cancer_all_ages_`US_or_global'_cleaned-BB.xlsx", ///
+	sheet("with icd9") first clear
+
 keep icd9 cancer_type total
 rename total yll
-* Total years of life lost by ICD-9 
-collapse (sum) yll, by(icd9)
+
+* Sum years of life lost by ICD-9 
+collapse (sum) yll_`US_or_global' = yll , by(icd9)
 drop if icd9 == "" | icd9 == "?"
 
-tempfile burden_data 
+tempfile burden_data_`US_or_global'
+save "`burden_data_`US_or_global''"
+
+}
+
+* Merge US and global burden together
+use "`burden_data_US'", clear
+merge 1:1 icd9 using "`burden_data_global'"
+drop _merge
+tempfile burden_data
 save "`burden_data'"
 
 ************************************
 * Load trial data
 ************************************
-use "data/prepared_trials.dta" , clear
+use "data/processed/prepared_trials.dta" , clear
 
 * Reshape indications long by trial id for merging in burden of disease
 keep trial_id icd9_0*
@@ -50,10 +64,11 @@ denominator is # of indications with nonmissing YLL
 e.g. a trial with 3 indications, 2 of which have YLL data, 
 will have average YLL of: (YLL1 + YLL2) / 2								
 *************************************************************************/
-collapse (mean) mean_yll = yll , by(trial_id) 
+collapse (mean) mean_yll_US = yll_US ///
+		mean_yll_global = yll_global , by(trial_id) 
 
 * What percentage of trials have at least one ICD9 matching burden of disease data?
-count if mean_yll != .
+count if mean_yll_global != .
 di `r(N)' / _N * 100 " percent of trials with matching ICD-9"
 
 ************************************************************************
@@ -61,10 +76,43 @@ di `r(N)' / _N * 100 " percent of trials with matching ICD-9"
 ************************************************************************
 
 * Merge rest of trial data back in 
-merge 1:1 trial_id using "data/prepared_trials.dta"
+merge 1:1 trial_id using "data/processed/prepared_trials.dta"
 
 * Perform comparison of means t-test
+
+* Scale YLL by 1 million
+foreach var of varlist mean_yll_* {
+replace `var' = `var' / 1000000
+}
+* Label YLL
 cap label drop ppm_label
 label define ppm_label  0 "non-PPM" 1 "PPM"
 label values g_ppm ppm_label
-ttest mean_yll, by(g_ppm) unequal
+* Mean of US YLL
+estpost ttest mean_yll_US, by(g_ppm) unequal
+matrix est_US = (e(mu_1) \ e(mu_2) \ -e(t)) 
+* Mean of Global YLL
+estpost ttest mean_yll_global, by(g_ppm) unequal
+matrix est_global = (e(mu_1) \ e(mu_2) \ -e(t)) 
+* Combine into one matrix
+matrix est_ttest = (est_US , est_global)
+matrix rownames est_ttest = "non-PPM" "PPM" "t-statistic"
+matrix colnames est_ttest = "US" "Global"
+
+* Output to Tex
+matlist est_ttest
+local output_directory "reports/report_10-20-17/tables/burden_of_disease"
+!mkdir "`output_directory'"
+outtable using "`output_directory'/ttest", ///
+	mat(est_ttest) replace f(%9.2f) caption("Burden of disease: Millions of years of life lost")
+
+
+
+
+
+
+
+
+
+
+

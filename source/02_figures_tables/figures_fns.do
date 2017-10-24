@@ -186,6 +186,175 @@ program define trial_count_by_type
 end
 
 
+*Bounded share of trials (used for bounded public firm shares)
+cap program drop bounded_share
+program define bounded_share
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)] [xlabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	prep_phases
+	collapse (mean) `lb' `ub', by(year_start phase) 
+	replace `lb' = `lb' * 100
+	replace `ub' = `ub' * 100
+	reshape wide `lb' `ub', i(year_start) j(phase)
+	
+	if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rarea `lb'1 `ub'1 year_start, fin(30) lw(none) color(navy) || ///
+		rarea `lb'2 `ub'2 year_start, fin(30) lw(none) color(maroon) || ///
+		rarea `lb'3 `ub'3 year_start, fin(30) lw(none) color(forest_green)  || ///
+		line  `lb'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `lb'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `lb'3  year_start, lp(dash) lcolor(forest_green) || ///
+		line  `ub'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `ub'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `ub'3  year_start, lp(dash) lcolor(forest_green)  ///
+		title("`title'", size(medium)) ///
+		ytitle("Share of trials (%)", size(medsmall))  ///
+		`ylabel' `xlabel' ///
+		xtitle("Start year") ///
+		legend(	order(1 2 3)  ///
+			lab(1 "Phase I") ///
+			lab(2 "Phase II") ///
+			lab(3 "Phase III") ///
+			rows(1) ///
+			) 
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
+
+
+*Bounded share of trials (used for bounded public firm shares)
+cap program drop bounded_share
+program define bounded_share
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)] [xlabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	collapse (mean) `lb' `ub', by(year_start ) 
+	replace `lb' = `lb' * 100
+	replace `ub' = `ub' * 100
+	
+	if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rarea `lb' `ub' year_start, fin(30) lw(none) || ///
+		line  `lb'  year_start, lp(dash) || ///
+		line  `ub'  year_start, lp(dash)  ///
+		title("`title'", size(medium)) ///
+		ytitle("Share of trials (%)", size(medsmall))  ///
+		`ylabel' `xlabel' ///
+		xtitle("Start year") ///
+		legend(off)
+		
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
+
+
+
+
+* Bounded count of trials
+cap program drop bounded_count
+program define bounded_count
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)] [xlabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	collapse (sum) `lb' `ub', by(year_start) 
+	
+	//if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rarea `lb' `ub' year_start, fin(30) lw(none) || ///
+		line  `lb'  year_start, lp(dash) || ///
+		line  `ub'  year_start, lp(dash)  ///
+		title("`title'", size(medium)) ///
+		ytitle("Number of trials", size(medsmall))  ///
+		`ylabel' `xlabel' ///
+		xtitle("Start year") ///
+		legend(off)
+		
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
+
+
+
+/*
+*Bounded share of trials (used for bounded public firm shares)
+cap program drop bounded_share
+program define bounded_share
+	syntax [if], ///
+	lb(string) ub(string) ///
+	[figure_path(string)] ///
+	[title(string)] ///
+	[ylabel(string)] [xlabel(string)]
+
+	preserve
+	if "`if'" != "" keep `if'
+
+	prep_phases
+	collapse (mean) `lb' `ub', by(year_start phase) 
+	replace `lb' = `lb' * 100
+	replace `ub' = `ub' * 100
+	reshape wide `lb' `ub', i(year_start) j(phase)
+	
+	if "`ylabel'" == "" local ylabel ylabel(0(10)100, angle(0))
+	list
+	
+	graph twoway ///
+		rarea `lb'1 `ub'1 year_start, fin(30) lw(none) color(navy) || ///
+		rarea `lb'2 `ub'2 year_start, fin(30) lw(none) color(maroon) || ///
+		rarea `lb'3 `ub'3 year_start, fin(30) lw(none) color(forest_green)  || ///
+		line  `lb'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `lb'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `lb'3  year_start, lp(dash) lcolor(forest_green) || ///
+		line  `ub'1  year_start, lp(dash) lcolor(navy) || ///
+		line  `ub'2  year_start, lp(dash) lcolor(maroon) || ///
+		line  `ub'3  year_start, lp(dash) lcolor(forest_green)  ///
+		title("`title'", size(medium)) ///
+		ytitle("Share of trials (%)", size(medsmall))  ///
+		`ylabel' `xlabel' ///
+		xtitle("Start year") ///
+		legend(	order(1 2 3)  ///
+			lab(1 "Phase I") ///
+			lab(2 "Phase II") ///
+			lab(3 "Phase III") ///
+			rows(1) ///
+			) 
+	if "`figure_path'" != "" graph export "`figure_path'", replace
+
+	restore
+
+end
+
 
 *Bounded share of trials (used for bounded public firm shares)
 cap program drop bounded_share

@@ -397,37 +397,131 @@ trial_share_by_phase if neoplasm == 0 & us_trial == 1, var(r_ppm) ///
 
 
 
-/*
-
-/* In development */
-
-trial_count_by_phase if sponsor_public_ancestor == 1 & year_start >= 2010, ///
-	title("Number of registered trials by phase: public sponsor firms") 
-
-trial_share_by_phase, var(sponsor_public_max) title("Share of trials sponsored by public firm or firm with public ancestor")
-trial_share_by_phase, var(sponsor_public) title("Share of trials sponsored by public firm")
-
-trial_share_by_phase if sponsor_public_ancestor == 0, var(r_ppm) ylabel("ylabel(0(1)10, angle(0))")
-trial_share_by_phase if sponsor_public_ancestor == 1, var(r_ppm) ylabel("ylabel(0(1)10, angle(0))")
-
-
-
 set more off
+
 cap drop any_public*
 gen any_public = sponsor_public == 1 | collaborator_public == 1
 gen any_public_max = sponsor_public_max == 1 | collaborator_public_max == 1
 
-* Bounded shares 
-bounded_share if year_start >= 2005, ///
-	lb(sponsor_public) ub(sponsor_public_max)  ///
-	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
-	title("Share of trials with public firm sponsor") 
+local output_dir = "`figure_dir'/bounded_public_plots"
+!mkdir "`output_dir'"
 
-bounded_share if year_start >= 2005, ///
-	lb(any_public) ub(any_public_max) ///
-	xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
-	title("Share of trials with public firm involvement") 
+* Bounded shares
+* PPM Trial Public shares
+	* Phase 1 
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 1 & phase_1 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase I PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_PPM_P1.eps")
 
+	* Phase 2 
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 1 & phase_2 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase II PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_PPM_P2.eps")
+
+	* Phase 3
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 1 & phase_3 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase III PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_PPM_P3.eps")
+
+
+* non-PPM Trial Public shares
+	* Phase 1 
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 0 & phase_1 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase I non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_nonPPM_P1.eps")
+
+	* Phase 2 
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 0 & phase_2 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase II non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_nonPPM_P2.eps") 
+
+	* Phase 3
+	bounded_share if year_start >= 2005 & ///
+		g_ppm == 0 & phase_3 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		xlabel(xlabel(2005(1)2016, angle(300) ) ) ///
+		title("Share of Phase III non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/share_public_nonPPM_P3.eps")
+
+
+
+
+* Bounded TRIAL COUNTS
+* PPM Trial Public counts
+	* Phase 1 
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 1 & phase_1 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase I PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_PPM_P1.eps")
+
+	* Phase 2 
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 1 & phase_2 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase II PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_PPM_P2.eps")
+
+	* Phase 3
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 1 & phase_3 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase III PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_PPM_P3.eps")
+
+* non-PPM Trial Public shares
+	* Phase 1 
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 0 & phase_1 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase I non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_nonPPM_P1.eps")
+
+	* Phase 2 
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 0 & phase_2 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase II non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_nonPPM_P2.eps") 
+
+	* Phase 3
+	bounded_count if year_start >= 2005 & ///
+		g_ppm == 0 & phase_3 == 1 , ///
+		lb(any_public) ub(any_public_max) ///
+		ylabel(ylabel(0(100)1500, angle(0))) ///
+		xlabel(xlabel(2005(1)2016, angle(300)) ) ///
+		title("Count of Phase III non-PPM trials with public firm involvement") ///
+		figure_path("`output_dir'/count_public_nonPPM_P3.eps")
+
+
+
+
+/*
 * Bounded share (PPM)
 bounded_share if g_ppm == 1 & year_start >= 2005, ///
 	lb(sponsor_public) ub(sponsor_public_max) ///

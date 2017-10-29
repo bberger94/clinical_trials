@@ -55,47 +55,82 @@ program define ppm_regs
 
 	*****All years	
 	`quietly' `estimator' `ppm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type, ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type ) post
 		}
 		estimates store reg1a
 		
 	`quietly' `estimator' `ppm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type, ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type ) post
 		}
-		estimates store reg1b
-		
+		estimates store reg1b	
 	
-	*****Most recent years only
-	local if = "if year_start >= 2005"
-
+		
 	`quietly' `estimator' `ppm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type `if', ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
 		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
 		}
 		estimates store reg1c
-		
+	
 	`quietly' `estimator' `ppm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type `if', ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
 		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
 		}
-		estimates store reg1d
+		estimates store reg1d	
+	
+	*****Most recent years only
+	local if = "if year_start >= 2005"
+
+	`quietly' `estimator' `ppm' ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
+		vce(cluster most_common_chapter)
+		if "`margins'" != "" {
+		`quietly' margins, ///
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		}
+		estimates store reg1e
+
+	`quietly' `estimator' `ppm' ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
+		vce(cluster most_common_chapter)
+		if "`margins'" != "" {
+		`quietly' margins, ///
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		}
+		estimates store reg1f
+		
+	`quietly' `estimator' `ppm' ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
+		vce(cluster most_common_chapter)
+		if "`margins'" != "" {
+		`quietly' margins, ///
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		}
+		estimates store reg1g
+
+	`quietly' `estimator' `ppm' ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
+		vce(cluster most_common_chapter)
+		if "`margins'" != "" {
+		`quietly' margins, ///
+		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		}
+		estimates store reg1h
 
 	local fmt 4
-	
 	di "Dependent variable: `ppm'" 
 	
 	estout reg1*, ///
@@ -121,19 +156,30 @@ program define duration_regs
 	if "`end_dates'" != "" keep if date_end_type_ == "`end_dates'"
 
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding g_ppm , robust
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public g_ppm , robust
 		estimates store reg2a
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding g_ppm if us_trial == 1 , robust
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max g_ppm , robust
 		estimates store reg2b
+		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding g_ppm if us_trial == 1 & neoplasm==1 , robust
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public g_ppm if us_trial == 1 , robust
 		estimates store reg2c
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max g_ppm if us_trial == 1 , robust
+		estimates store reg2d
+				
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 nih_funding any_public g_ppm if us_trial == 1 & neoplasm==1 , robust
+		estimates store reg2e
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 nih_funding any_public_max g_ppm if us_trial == 1 & neoplasm==1 , robust
+		estimates store reg2f
 		
 	replace year_start = year_start
 	local roles  *_drole 	 
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding `roles'  if us_trial == 1 & neoplasm==1 , robust
+		i.year_start phase_2 phase_3 nih_funding any_public_max `roles'  if us_trial == 1 & neoplasm==1 , robust
 		estimates store reg2d
 		
 	estout reg2*, cells(b(star fmt(3) ) se(par fmt(3) )) ///
@@ -147,10 +193,21 @@ end
 	Run regression programs and log output
 \*----------------------------------------------------------------------------*/
 
-local output_dir "reports/regression_output_10-20-17"
-!mkdir `output_dir'
-log using "`output_dir'/regression_output_10-20-17.log", replace
+local report_dir "reports/report_10-20-17"
+local reg_dir "`report_dir'/regs"
 
+foreach dir in `report_dir' `table_dir' `figure_dir' `reg_dir' {
+	!mkdir "`dir'"
+}
+
+log using "`reg_dir'/regression_output_10-20-17.log", replace
+
+
+cap drop any_public*
+gen any_public = sponsor_public == 1 | collaborator_public == 1
+gen any_public_max = sponsor_public_max == 1 | collaborator_public_max == 1
+label variable any_public "Public firm (lower bound)"
+label variable any_public_max "Public firm (upper bound)"
 
 * ------------------------------*
 * Main PPM regressions (Table 7)
@@ -161,15 +218,16 @@ ppm_regs, ppm(r_ppm) estimator(regress) quietly
 * ------------------------------*
 * Duration regressions (Table 8)
 * ------------------------------*
-duration_regs, end_dates("actual")
+duration_regs, end_dates("actual") quietlyv
 
 
+/*
 * ------------------------------*
 * Appendix reg table: (Table A11)
 * ------------------------------*
 ppm_regs, ppm(g_ppm) estimator(logit) margins quietly
 ppm_regs, ppm(r_ppm) estimator(logit) margins quietly
-
+*/
 
 
 

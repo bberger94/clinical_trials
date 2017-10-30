@@ -218,7 +218,7 @@ lpm_regs, lpm(r_lpm) estimator(regress) quietly
 * ------------------------------*
 * Duration regressions (Table 8)
 * ------------------------------*
-duration_regs, end_dates("actual") quietlyv
+duration_regs, end_dates("actual") quietly
 
 
 /*

@@ -28,11 +28,15 @@ program define summary_stats
 	[title(string)]
 	
 	preserve
-	local vars 	biomarker_status *_lpm *_role *_type *_drole ///
+	local vars 	biomarker_status g_lpm r_lpm ///
 			phase_1 phase_2 phase_3 ///
-			neoplasm ///
 			nih_funding ///
-			us_trial 
+			us_trial ///
+			any_public any_public_max ///
+			neoplasm *_role *_type *_drole ///
+			
+	lab var any_public 	"Publicly-listed firm (lower bound)"
+	lab var any_public_max 	"Publicly-listed firm (upper bound)"
 			
 	eststo all: quietly estpost summarize `vars'
 	eststo us: quietly estpost summarize `vars' if us_trial == 1

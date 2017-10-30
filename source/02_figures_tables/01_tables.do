@@ -43,79 +43,79 @@ bmkrtype_count, table_path("`table_dir'/02-bmkrtype_count.tex")
 *Table 3
 bmkrdrole_count, table_path("`table_dir'/03-bmkrdrole_count.tex")
 *Table 4
-ppm_count_and_share, 	ppm(g_ppm) 							///
+lpm_count_and_share, 	lpm(g_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition") 		///
-			table_path("`table_dir'/04a-ppm_count_and_share.tex") 
-ppm_count_and_share, 	ppm(r_ppm) 							///
+			table_path("`table_dir'/04a-lpm_count_and_share.tex") 
+lpm_count_and_share, 	lpm(r_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition") 		///
-			table_path("`table_dir'/04b-ppm_count_and_share.tex") 
+			table_path("`table_dir'/04b-lpm_count_and_share.tex") 
 
 *Table 5
-ppm_count_and_share if neoplasm == 1, 							///
-			ppm(g_ppm) 							///
+lpm_count_and_share if neoplasm == 1, 							///
+			lpm(g_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition"		///
 				"for drugs with cancer indications") 			///
-			table_path("`table_dir'/05a-ppm_count_and_share_cancer.tex") 
+			table_path("`table_dir'/05a-lpm_count_and_share_cancer.tex") 
 				
-ppm_count_and_share if neoplasm == 1,							///
-			ppm(r_ppm) 							///
+lpm_count_and_share if neoplasm == 1,							///
+			lpm(r_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition" 		///
 				"for drugs with cancer indications") 			///
-			table_path("`table_dir'/05b-ppm_count_and_share_cancer.tex") 
+			table_path("`table_dir'/05b-lpm_count_and_share_cancer.tex") 
 
 
 *Table 6
-ppm_count_and_share if neoplasm == 0, 							///
-			ppm(g_ppm) 							///
+lpm_count_and_share if neoplasm == 0, 							///
+			lpm(g_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition" 		///
 				"for drugs without cancer indications") 		///
-			table_path("`table_dir'/06a-ppm_count_and_share_noncancer.tex") 
+			table_path("`table_dir'/06a-lpm_count_and_share_noncancer.tex") 
 			
-ppm_count_and_share if neoplasm == 0, 							///
-		 	ppm(r_ppm) 							///
+lpm_count_and_share if neoplasm == 0, 							///
+		 	lpm(r_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition" 		///
 				"for drugs without cancer indications") 		///
-			table_path("`table_dir'/06b-ppm_count_and_share_cancer.tex") 
+			table_path("`table_dir'/06b-lpm_count_and_share_cancer.tex") 
 
 *Table 7
-ppm_count_and_share if us_trial == 1,							///
-			ppm(g_ppm) 							///
+lpm_count_and_share if us_trial == 1,							///
+			lpm(g_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition" 		///
 				"for trials located in US" ) 				///
-			table_path("`table_dir'/07a-ppm_count_and_share_us.tex") 
+			table_path("`table_dir'/07a-lpm_count_and_share_us.tex") 
 			
-ppm_count_and_share if us_trial == 1,							///
-			ppm(r_ppm) 							///
+lpm_count_and_share if us_trial == 1,							///
+			lpm(r_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition"		///
 				"for trials located in US")				/// 
-			table_path("`table_dir'/07b-ppm_count_and_share_us.tex") 
+			table_path("`table_dir'/07b-lpm_count_and_share_us.tex") 
 
 *Table 8
-ppm_count_and_share if us_trial == 0,							///
-			ppm(g_ppm) 							///
+lpm_count_and_share if us_trial == 0,							///
+			lpm(g_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition" 		///
 				"for trials located outside US") 			///
-			table_path("`table_dir'/08a-ppm_count_and_share_non-us.tex") 
-ppm_count_and_share if us_trial == 0,							///
-			ppm(r_ppm) 							///
+			table_path("`table_dir'/08a-lpm_count_and_share_non-us.tex") 
+lpm_count_and_share if us_trial == 0,							///
+			lpm(r_lpm) 							///
 			title(	"Potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition" 		///
 				"for trials located outside US") 			///
-			table_path("`table_dir'/08b-ppm_count_and_share_non-us.tex") 				
+			table_path("`table_dir'/08b-lpm_count_and_share_non-us.tex") 				
 
 *Table 9
-nih_funding_by_ppm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	///
+nih_funding_by_lpm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	///
 					"Generous precision medicine definition" )	///
-				table_path("`table_dir'/09-nih_funding_by_ppm_and_phase.tex") 
+				table_path("`table_dir'/09-nih_funding_by_lpm_and_phase.tex") 
 				
 
 
@@ -133,34 +133,34 @@ bmkrdrole_count if us_trial == 1,							///
 		table_path("`table_dir'/A03-bmkrdrole_count_us.tex")
 
 *Table A5
-ppm_count_and_share if neoplasm == 1 & us_trial == 1, 					///
-			ppm(g_ppm) 							///
+lpm_count_and_share if neoplasm == 1 & us_trial == 1, 					///
+			lpm(g_lpm) 							///
 			title(	"US potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition"		///
 				"for drugs with cancer indications") 			///
-			table_path("`table_dir'/A05a-ppm_count_and_share_cancer_us.tex") 
+			table_path("`table_dir'/A05a-lpm_count_and_share_cancer_us.tex") 
 				
-ppm_count_and_share if neoplasm == 1 & us_trial == 1,					///
-			ppm(r_ppm) 							///
+lpm_count_and_share if neoplasm == 1 & us_trial == 1,					///
+			lpm(r_lpm) 							///
 			title(	"US potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition" 		///
 				"for drugs with cancer indications") 			///
-			table_path("`table_dir'/A05b-ppm_count_and_share_cancer_us.tex") 
+			table_path("`table_dir'/A05b-lpm_count_and_share_cancer_us.tex") 
 
 *Table A6
-ppm_count_and_share if neoplasm == 0 & us_trial == 1,					///
-			ppm(g_ppm) 							///
+lpm_count_and_share if neoplasm == 0 & us_trial == 1,					///
+			lpm(g_lpm) 							///
 			title(	"US potential precision medicine trials (1995-2016):" 	///
 				"Generous precision medicine definition" 		///
 				"for drugs without cancer indications") 		///
-			table_path("`table_dir'/A06a-ppm_count_and_share_noncancer_us.tex") 
+			table_path("`table_dir'/A06a-lpm_count_and_share_noncancer_us.tex") 
 
-ppm_count_and_share if neoplasm == 0 & us_trial == 1,					///
-			ppm(r_ppm) 							///
+lpm_count_and_share if neoplasm == 0 & us_trial == 1,					///
+			lpm(r_lpm) 							///
 			title(	"US potential precision medicine trials (1995-2016):" 	///
 				"Restrictive precision medicine definition" 		///
 				"for drugs without cancer indications") 		///
-			table_path("`table_dir'/A06b-ppm_count_and_share_cancer_us.tex") 
+			table_path("`table_dir'/A06b-lpm_count_and_share_cancer_us.tex") 
 
 
 

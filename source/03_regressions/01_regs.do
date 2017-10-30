@@ -46,15 +46,15 @@ winsor2 duration, suffix(_w) cuts(1 99)
 
 set more off
 
-cap program drop ppm_regs
-program define ppm_regs
+cap program drop lpm_regs
+program define lpm_regs
 	syntax, ///
-	ppm(string) [quietly] [margins] [estimator(string)]
+	lpm(string) [quietly] [margins] [estimator(string)]
 
 	if "`estimator'" == "" local estimator regress
 
 	*****All years	
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -63,7 +63,7 @@ program define ppm_regs
 		}
 		estimates store reg1a
 		
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -73,7 +73,7 @@ program define ppm_regs
 		estimates store reg1b	
 	
 		
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -82,7 +82,7 @@ program define ppm_regs
 		}
 		estimates store reg1c
 	
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -94,7 +94,7 @@ program define ppm_regs
 	*****Most recent years only
 	local if = "if year_start >= 2005"
 
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -103,7 +103,7 @@ program define ppm_regs
 		}
 		estimates store reg1e
 
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -112,7 +112,7 @@ program define ppm_regs
 		}
 		estimates store reg1f
 		
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -121,7 +121,7 @@ program define ppm_regs
 		}
 		estimates store reg1g
 
-	`quietly' `estimator' `ppm' ///
+	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
@@ -131,7 +131,7 @@ program define ppm_regs
 		estimates store reg1h
 
 	local fmt 4
-	di "Dependent variable: `ppm'" 
+	di "Dependent variable: `lpm'" 
 	
 	estout reg1*, ///
 		cells(b(star fmt(`fmt') ) se(par fmt(`fmt') )) ///
@@ -156,24 +156,24 @@ program define duration_regs
 	if "`end_dates'" != "" keep if date_end_type_ == "`end_dates'"
 
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public g_ppm , robust
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public g_lpm , robust
 		estimates store reg2a
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max g_ppm , robust
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max g_lpm , robust
 		estimates store reg2b
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public g_ppm if us_trial == 1 , robust
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public g_lpm if us_trial == 1 , robust
 		estimates store reg2c
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max g_ppm if us_trial == 1 , robust
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max g_lpm if us_trial == 1 , robust
 		estimates store reg2d
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding any_public g_ppm if us_trial == 1 & neoplasm==1 , robust
+		i.year_start phase_2 phase_3 nih_funding any_public g_lpm if us_trial == 1 & neoplasm==1 , robust
 		estimates store reg2e
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding any_public_max g_ppm if us_trial == 1 & neoplasm==1 , robust
+		i.year_start phase_2 phase_3 nih_funding any_public_max g_lpm if us_trial == 1 & neoplasm==1 , robust
 		estimates store reg2f
 		
 	replace year_start = year_start
@@ -210,10 +210,10 @@ label variable any_public "Public firm (lower bound)"
 label variable any_public_max "Public firm (upper bound)"
 
 * ------------------------------*
-* Main PPM regressions (Table 7)
+* Main LPM regressions (Table 7)
 * ------------------------------*
-ppm_regs, ppm(g_ppm) estimator(regress) quietly 
-ppm_regs, ppm(r_ppm) estimator(regress) quietly
+lpm_regs, lpm(g_lpm) estimator(regress) quietly 
+lpm_regs, lpm(r_lpm) estimator(regress) quietly
 
 * ------------------------------*
 * Duration regressions (Table 8)
@@ -225,8 +225,8 @@ duration_regs, end_dates("actual") quietlyv
 * ------------------------------*
 * Appendix reg table: (Table A11)
 * ------------------------------*
-ppm_regs, ppm(g_ppm) estimator(logit) margins quietly
-ppm_regs, ppm(r_ppm) estimator(logit) margins quietly
+lpm_regs, lpm(g_lpm) estimator(logit) margins quietly
+lpm_regs, lpm(r_lpm) estimator(logit) margins quietly
 */
 
 

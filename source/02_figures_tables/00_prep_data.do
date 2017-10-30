@@ -3,7 +3,7 @@
 	This script:
 	1. Loads the cortellis clinical trials data 
 	2. Makes some small modifications to phase variables    
-	3. Merges biomarker data; defining PPM trials
+	3. Merges biomarker data; defining LPM trials
 	4. Merges firm data; constructing useful public firm indicators
 	5. Generates useful variables for analysis
 	6. Writes to file "data/prepared_trials.dta"
@@ -83,10 +83,10 @@ foreach var of varlist biomarker_type_* {
 	replace structural_type = 1 if `var' == "Structural (imaging)"
 }
 
-**Generate PPM variables
-cap drop g_ppm r_ppm
-gen g_ppm = .
-replace g_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
+**Generate LPM variables
+cap drop g_lpm r_lpm
+gen g_lpm = .
+replace g_lpm = (proteomic_type == 1 | genomic_type == 1) & ///
 		disease_marker_role == 1 & ///
 		(diagnosis_drole             == 1 | ///
 		 diff_diagnosis_drole        == 1 | ///
@@ -97,8 +97,8 @@ replace g_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
 		 selection_for_therapy_drole == 1   ///
 		 )
 
-gen r_ppm = .
-replace r_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
+gen r_lpm = .
+replace r_lpm = (proteomic_type == 1 | genomic_type == 1) & ///
 		disease_marker_role == 1 & ///
 		(predict_resistance_drole    == 1 | ///
 		 predict_efficacy_drole      == 1 | ///
@@ -107,9 +107,9 @@ replace r_ppm = (proteomic_type == 1 | genomic_type == 1) & ///
  
 
 /*
-**Collapse PPM and roles/types
-*Returns 1 for PPM if any biomarker x indications 
-within a trial match PPM criteria  
+**Collapse LPM and roles/types
+*Returns 1 for LPM if any biomarker x indications 
+within a trial match LPM criteria  
 
 *Returns 1 for a detailed role role if any biomarkers
 within a trial may be used for that role with an indication in the trial
@@ -121,7 +121,7 @@ if any biomarkers within a trial have that role
 */
 
 drop biomarker_role
-local collapse_vars *_ppm  *_drole  *_type  *_role
+local collapse_vars *_lpm  *_drole  *_type  *_role
 		
 collapse (max) 	`collapse_vars' , ///
 		by(trial_id)
@@ -309,8 +309,8 @@ lab var nih_funding "Received NIH funding"
 lab var us_trial "Trial site in US" 
 lab var neoplasm "Drug indication for neoplasm"
 
-lab var g_ppm "Generous PPM" 
-lab var r_ppm "Restrictive PPM" 
+lab var g_lpm "Generous LPM" 
+lab var r_lpm "Restrictive LPM" 
 
 *Firm public/non-public
 lab var sponsor_public 			"At least one sponsor is public firm"
@@ -365,7 +365,7 @@ order trial_id date* year* duration ///
 	phase* us_trial neoplasm nih_funding ///
 	recruitment_status patient_count_enrollment ///
 	sponsor* collaborator* ///
-	biomarker_status *_ppm *_drole *_type *_role most_common_chapter 
+	biomarker_status *_lpm *_drole *_type *_role most_common_chapter 
 	       
 ***************************************************
 **** Select universe of trials ********************

@@ -28,7 +28,7 @@ program define summary_stats
 	[title(string)]
 	
 	preserve
-	local vars 	biomarker_status *_ppm *_role *_type *_drole ///
+	local vars 	biomarker_status *_lpm *_role *_type *_drole ///
 			phase_1 phase_2 phase_3 ///
 			neoplasm ///
 			nih_funding ///
@@ -152,10 +152,10 @@ end
 
 
 
-cap program drop ppm_count_and_share
-program define ppm_count_and_share
+cap program drop lpm_count_and_share
+program define lpm_count_and_share
 	syntax [if], ///
-	ppm(string) ///
+	lpm(string) ///
 	[table_path(string)] ///
 	[title(string)]
 
@@ -166,25 +166,25 @@ program define ppm_count_and_share
 	*Subset by `if'
 	if "`if'" != "" keep `if'
 	
-	gen ppm_times100 = `ppm' * 100 
+	gen lpm_times100 = `lpm' * 100 
 	cap label drop year_labels
 
-	eststo C1: quietly total `ppm'				, over(year_start)
-	eststo C2: quietly mean ppm_times100			, over(year_start)
-	eststo C3: quietly total `ppm' 	if phase_1 == 1		, over(year_start)
-	eststo C4: quietly mean ppm_times100 	if phase_1 == 1	, over(year_start)
-	eststo C5: quietly total `ppm'	if phase_2 == 1		, over(year_start)
-	eststo C6: quietly mean ppm_times100	if phase_2 == 1	, over(year_start)
-	eststo C7: quietly total `ppm'	if phase_3 == 1		, over(year_start)
-	eststo C8: quietly mean ppm_times100	if phase_3 == 1	, over(year_start)
+	eststo C1: quietly total `lpm'				, over(year_start)
+	eststo C2: quietly mean lpm_times100			, over(year_start)
+	eststo C3: quietly total `lpm' 	if phase_1 == 1		, over(year_start)
+	eststo C4: quietly mean lpm_times100 	if phase_1 == 1	, over(year_start)
+	eststo C5: quietly total `lpm'	if phase_2 == 1		, over(year_start)
+	eststo C6: quietly mean lpm_times100	if phase_2 == 1	, over(year_start)
+	eststo C7: quietly total `lpm'	if phase_3 == 1		, over(year_start)
+	eststo C8: quietly mean lpm_times100	if phase_3 == 1	, over(year_start)
 
 	if "`table_path'" != "" local write_tex "using `table_path'"
 	esttab C* `write_tex', replace ///
 		title("`title'") ///
-		mtitles("\shortstack{PPM Trials:\\All}" "Share of trials (\%)" ///
-			"\shortstack{PPM Trials:\\Phase I}" "\shortstack{Share of\\Phase I trials (\%)}" ///
-			"\shortstack{PPM Trials:\\Phase II}" "\shortstack{Share of\\Phase II trials (\%)}" ///
-			"\shortstack{PPM Trials:\\Phase III}" "\shortstack{Share of\\Phase III trials (\%)}" ///
+		mtitles("\shortstack{LPM Trials:\\All}" "Share of trials (\%)" ///
+			"\shortstack{LPM Trials:\\Phase I}" "\shortstack{Share of\\Phase I trials (\%)}" ///
+			"\shortstack{LPM Trials:\\Phase II}" "\shortstack{Share of\\Phase II trials (\%)}" ///
+			"\shortstack{LPM Trials:\\Phase III}" "\shortstack{Share of\\Phase III trials (\%)}" ///
 			) ///
 		collabels(none) eqlabels(none) ///
 		cells(b(fmt(%9.3gc))) ///
@@ -198,8 +198,8 @@ end
 
 
 *NIH funding by Phase
-cap program drop nih_funding_by_ppm_and_phase
-program define nih_funding_by_ppm_and_phase
+cap program drop nih_funding_by_lpm_and_phase
+program define nih_funding_by_lpm_and_phase
 	syntax [if], ///
 	[table_path(string)] ///
 	[title(string)] ///
@@ -220,13 +220,13 @@ program define nih_funding_by_ppm_and_phase
 	eststo m2: quietly mean nih_funding if phase == 2, over(year_start)
 	eststo m3: quietly mean nih_funding if phase == 3, over(year_start)
 	
-	eststo m4: quietly mean nih_funding if phase == 1 & g_ppm == 1, over(year_start)
-	eststo m5: quietly mean nih_funding if phase == 2 & g_ppm == 1, over(year_start)
-	eststo m6: quietly mean nih_funding if phase == 3 & g_ppm == 1, over(year_start)
+	eststo m4: quietly mean nih_funding if phase == 1 & g_lpm == 1, over(year_start)
+	eststo m5: quietly mean nih_funding if phase == 2 & g_lpm == 1, over(year_start)
+	eststo m6: quietly mean nih_funding if phase == 3 & g_lpm == 1, over(year_start)
 	
-	eststo m7: quietly mean nih_funding if phase == 1 & r_ppm == 1, over(year_start)
-	eststo m8: quietly mean nih_funding if phase == 2 & r_ppm == 1, over(year_start)
-	eststo m9: quietly mean nih_funding if phase == 3 & r_ppm == 1, over(year_start)
+	eststo m7: quietly mean nih_funding if phase == 1 & r_lpm == 1, over(year_start)
+	eststo m8: quietly mean nih_funding if phase == 2 & r_lpm == 1, over(year_start)
+	eststo m9: quietly mean nih_funding if phase == 3 & r_lpm == 1, over(year_start)
 	
 	if "`title'" == "" local title "Share of trials receiving NIH funding by phase"
 	if "`table_path'" != "" local write_tex "using `table_path'"
@@ -236,12 +236,12 @@ program define nih_funding_by_ppm_and_phase
 		mtitles("\shortstack{Phase I:\\All}" ///
 			"\shortstack{Phase II:\\All}" ///
 			"\shortstack{Phase III:\\All}" ///
-			"\shortstack{Phase I:\\Generous PPM}" ///
-			"\shortstack{Phase II:\\Generous PPM}" ///
-			"\shortstack{Phase III:\\Generous PPM}" ///
-			"\shortstack{Phase I:\\Restrictive PPM}" ///
-			"\shortstack{Phase II:\\Restrictive PPM}" ///
-			"\shortstack{Phase III:\\Restrictive PPM}" ///
+			"\shortstack{Phase I:\\Generous LPM}" ///
+			"\shortstack{Phase II:\\Generous LPM}" ///
+			"\shortstack{Phase III:\\Generous LPM}" ///
+			"\shortstack{Phase I:\\Restrictive LPM}" ///
+			"\shortstack{Phase II:\\Restrictive LPM}" ///
+			"\shortstack{Phase III:\\Restrictive LPM}" ///
 			) ///	
 		collabels(none)  ///
 		eqlabels("Share funded (\%)") ///

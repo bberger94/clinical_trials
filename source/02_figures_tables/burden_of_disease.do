@@ -5,7 +5,7 @@
 ** 2. Aggregates years of life lost by ICD-9
 ** 3. Merges into trial data by ICD-9
 ** 4. Averages years of life lost for each trial over indications
-** 5. Compares years of life lost between PPM and non-PPM trials
+** 5. Compares years of life lost between LPM and non-LPM trials
 ********************************************************************************
 
 
@@ -72,7 +72,7 @@ count if mean_yll_global != .
 di `r(N)' / _N * 100 " percent of trials with matching ICD-9"
 
 ************************************************************************
-* Compare YLL across PPM and non-PPM trials
+* Compare YLL across LPM and non-LPM trials
 ************************************************************************
 
 * Merge rest of trial data back in 
@@ -85,18 +85,18 @@ foreach var of varlist mean_yll_* {
 replace `var' = `var' / 1000000
 }
 * Label YLL
-cap label drop ppm_label
-label define ppm_label  0 "non-PPM" 1 "PPM"
-label values g_ppm ppm_label
+cap label drop lpm_label
+label define lpm_label  0 "non-LPM" 1 "LPM"
+label values g_lpm lpm_label
 * Mean of US YLL
-estpost ttest mean_yll_US, by(g_ppm) unequal
+estpost ttest mean_yll_US, by(g_lpm) unequal
 matrix est_US = (e(mu_1) \ e(mu_2) \ -e(t)) 
 * Mean of Global YLL
-estpost ttest mean_yll_global, by(g_ppm) unequal
+estpost ttest mean_yll_global, by(g_lpm) unequal
 matrix est_global = (e(mu_1) \ e(mu_2) \ -e(t)) 
 * Combine into one matrix
 matrix est_ttest = (est_US , est_global)
-matrix rownames est_ttest = "non-PPM" "PPM" "t-statistic"
+matrix rownames est_ttest = "non-LPM" "LPM" "t-statistic"
 matrix colnames est_ttest = "US" "Global"
 
 * Output to Tex

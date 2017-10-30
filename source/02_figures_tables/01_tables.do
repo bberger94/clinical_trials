@@ -27,6 +27,11 @@ foreach dir in `report_dir' `table_dir' `figure_dir' {
 	!mkdir "`dir'"
 }
 
+cap drop any_public*
+gen any_public = sponsor_public == 1 | collaborator_public == 1
+gen any_public_max = sponsor_public_max == 1 | collaborator_public_max == 1
+
+
 /*----------------------------------------------------------------------------*\
 	Generate tables
 \*----------------------------------------------------------------------------*/

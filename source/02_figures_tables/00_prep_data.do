@@ -228,6 +228,11 @@ merge 1:1 trial_id using "`temp1'"
 drop if _merge == 2
 drop _merge
 
+cap drop any_public*
+gen any_public = sponsor_public == 1 | collaborator_public == 1
+gen any_public_max = sponsor_public_max == 1 | collaborator_public_max == 1
+
+
 ***************************************************
 **** Generate useful variables ********************
 ***************************************************
@@ -321,6 +326,9 @@ lab var collaborator_public		"At least one collaborator is public firm"
 lab var collaborator_public_ancestor	"At least one collaborator has public ancestor"
 lab var collaborator_public_max		"At least one collaborator is public or has public ancestor"
 
+lab var any_public			"At least one sponsor/collaborator is public firm"
+//lab var any_public_ancestor		"At least one sponsor/collaborator has public ancestor"
+lab var any_public_max			"At least one sponsor/collaborator is public or has public ancestor"
 
 *Coarse Roles
 lab var therapeutic_marker_role "Biomarker role: therapeutic effect"

@@ -112,7 +112,7 @@ lpm_count_and_share if us_trial == 0,							///
 			table_path("`table_dir'/08b-lpm_count_and_share_non-us.tex") 				
 
 *Table 8
-* 8a: Public Var upper bound
+* 8a: Public count and share upper bound
 public_count_and_share if g_lpm == 1, 							///
 			public_var(any_public_max)					///
 			title( 	"Likely precision medicine (LPM) trials:"		///
@@ -125,7 +125,7 @@ public_count_and_share if r_lpm == 1, 							///
 				"publicly listed firm involvement (1995-2016, upper bound)") 	///
 			table_path("`table_dir'/08a2-r_lpm_public_ub_count_and_share.tex") 
 
-* 8b: Public Var lower bound
+* 8b: Public count and share lower bound
 public_count_and_share if g_lpm == 1, 							///
 			public_var(any_public)						///
 			title( 	"Likely precision medicine (LPM) trials:"		///

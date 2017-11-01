@@ -137,7 +137,6 @@ public_count_and_share if r_lpm == 1, 							///
 			title( 	"Likely precision medicine (LPM) trials:"		///
 				"publicly listed firm involvement (1995-2016, lower bound)") 	///
 			table_path("`table_dir'/08b2-r_lpm_public_lb_count_and_share.tex") 
-	
 
 *Table 9
 nih_funding_by_lpm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	///

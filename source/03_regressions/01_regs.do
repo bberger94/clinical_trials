@@ -51,8 +51,9 @@ program define lpm_regs
 	syntax, ///
 	lpm(string) [quietly] [margins] [estimator(string)]
 
+	estimates clear
 	if "`estimator'" == "" local estimator regress
-
+	
 	*****All years	
 	`quietly' `estimator' `lpm' ///
 		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public, ///
@@ -145,49 +146,103 @@ end
 ********************************************************************************
 cap program drop duration_regs
 program define duration_regs
-	syntax, ///
+	syntax [if], ///
 	[end_dates(string)] ///
 	[quietly]
 		
 	preserve
+	estimates clear
+	if "`if'" != "" keep `if'
 	keep if year_start >= 2000
 	
 	di "`end_dates'"
 	if "`end_dates'" != "" keep if date_end_type_ == "`end_dates'"
-
+	
+	* All trials
+	* LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public g_lpm , robust
-		estimates store reg2a
-	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max g_lpm , robust
-		estimates store reg2b
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public  ///
+		if g_lpm == 1 , robust
+		estimates store reg1a
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public g_lpm if us_trial == 1 , robust
-		estimates store reg2c
-	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max g_lpm if us_trial == 1 , robust
-		estimates store reg2d
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max  ///
+		if g_lpm == 1 , robust
+		estimates store reg1b
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding any_public g_lpm if us_trial == 1 & neoplasm==1 , robust
-		estimates store reg2e
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max  ///
+		if g_lpm == 1 & us_trial == 1 , robust
+		estimates store reg1c
+
+	* NON-LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding any_public_max g_lpm if us_trial == 1 & neoplasm==1 , robust
-		estimates store reg2f
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public  ///
+		if g_lpm == 0 , robust
+		estimates store reg1d
 		
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max  ///
+		if g_lpm == 0 , robust
+		estimates store reg1e
+				
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max  ///
+		if g_lpm == 0 & us_trial == 1 , robust
+		estimates store reg1f
+	
+	di "Printing Table 10a"
+	estout reg1*, cells(b(star fmt(3) ) se(par fmt(3) )) ///
+		starlevels($stars) legend label varlabels(_cons Constant) stats(N r2, fmt(0 3)) style(tex)	
+
+
+	* US? Cancer trials
+	keep if neoplasm == 1 
 	replace year_start = year_start
 	local roles  *_drole 	 
+	
+	* LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 nih_funding any_public_max `roles'  if us_trial == 1 & neoplasm==1 , robust
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public  ///
+		if g_lpm == 1 , robust
+		estimates store reg2a
+		
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max  ///
+		if g_lpm == 1 , robust
+		estimates store reg2b
+				
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max `roles' ///
+		if g_lpm == 1 , robust
+		estimates store reg2c
+	
+	* NON-LPM
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public  ///
+		if g_lpm == 0 , robust
 		estimates store reg2d
 		
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max  ///
+		if g_lpm == 0 , robust
+		estimates store reg2e
+				
+	`quietly' reg duration_w ///
+		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max `roles' ///
+		if g_lpm == 0 , robust
+		estimates store reg2f
+
+	di "Printing Table 10b"
 	estout reg2*, cells(b(star fmt(3) ) se(par fmt(3) )) ///
 		starlevels($stars) legend label varlabels(_cons Constant) stats(N r2, fmt(0 3)) style(tex)	
 		
 	restore
 	
 end
+
+
+
 
 /*----------------------------------------------------------------------------*\
 	Run regression programs and log output
@@ -210,15 +265,17 @@ label variable any_public "Public firm (lower bound)"
 label variable any_public_max "Public firm (upper bound)"
 
 * ------------------------------*
-* Main LPM regressions (Table 7)
+* Main LPM regressions (Table 9)
 * ------------------------------*
 lpm_regs, lpm(g_lpm) estimator(regress) quietly 
 lpm_regs, lpm(r_lpm) estimator(regress) quietly
 
 * ------------------------------*
-* Duration regressions (Table 8)
+* Duration regressions (Table 10)
 * ------------------------------*
 duration_regs, end_dates("actual") quietly
+
+
 
 
 /*

@@ -97,7 +97,6 @@ lpm_count_and_share if us_trial == 1,							///
 				"Restrictive precision medicine definition"		///
 				"for trials located in US")				/// 
 			table_path("`table_dir'/07b-lpm_count_and_share_us.tex") 
-
 *Table 8
 lpm_count_and_share if us_trial == 0,							///
 			lpm(g_lpm) 							///
@@ -111,6 +110,34 @@ lpm_count_and_share if us_trial == 0,							///
 				"Restrictive precision medicine definition" 		///
 				"for trials located outside US") 			///
 			table_path("`table_dir'/08b-lpm_count_and_share_non-us.tex") 				
+
+*Table 8
+* 8a: Public Var upper bound
+public_count_and_share if g_lpm == 1, 							///
+			public_var(any_public_max)					///
+			title( 	"Likely precision medicine (LPM) trials:"		///
+				"publicly listed firm involvement (1995-2016, upper bound)") 	///
+			table_path("`table_dir'/08a1-g_lpm_public_ub_count_and_share.tex") 
+
+public_count_and_share if r_lpm == 1, 							///
+			public_var(any_public_max)					///
+			title( 	"Likely precision medicine (LPM) trials:"		///
+				"publicly listed firm involvement (1995-2016, upper bound)") 	///
+			table_path("`table_dir'/08a2-r_lpm_public_ub_count_and_share.tex") 
+
+* 8b: Public Var lower bound
+public_count_and_share if g_lpm == 1, 							///
+			public_var(any_public)						///
+			title( 	"Likely precision medicine (LPM) trials:"		///
+				"publicly listed firm involvement (1995-2016, lower bound)") 	///
+			table_path("`table_dir'/08b1-g_lpm_public_lb_count_and_share.tex") 
+
+public_count_and_share if r_lpm == 1, 							///
+			public_var(any_public)						///
+			title( 	"Likely precision medicine (LPM) trials:"		///
+				"publicly listed firm involvement (1995-2016, lower bound)") 	///
+			table_path("`table_dir'/08b2-r_lpm_public_lb_count_and_share.tex") 
+	
 
 *Table 9
 nih_funding_by_lpm_and_phase, 	title(	"Share of trials receiving NIH funding:" 	///

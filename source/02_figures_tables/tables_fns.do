@@ -201,6 +201,52 @@ end
 
 
 
+
+
+cap program drop public_count_and_share
+program define public_count_and_share
+	syntax [if], ///
+	public_var(string) ///
+	[table_path(string)] ///
+	[title(string)]
+
+
+
+	preserve
+	
+	*Subset by `if'
+	if "`if'" != "" keep `if'
+	
+	gen pub_times100 = `public_var' * 100 
+	cap label drop year_labels
+
+	eststo C1: quietly total `public_var'			, over(year_start)
+	eststo C2: quietly mean pub_times100			, over(year_start)
+	eststo C3: quietly total `public_var' 	if phase_1 == 1	, over(year_start)
+	eststo C4: quietly mean pub_times100 	if phase_1 == 1	, over(year_start)
+	eststo C5: quietly total `public_var'	if phase_2 == 1	, over(year_start)
+	eststo C6: quietly mean pub_times100	if phase_2 == 1	, over(year_start)
+	eststo C7: quietly total `public_var'	if phase_3 == 1	, over(year_start)
+	eststo C8: quietly mean pub_times100	if phase_3 == 1	, over(year_start)
+
+	if "`table_path'" != "" local write_tex "using `table_path'"
+	esttab C* `write_tex', replace ///
+		title("`title'") ///
+		mtitles("\shortstack{All\\Count}" "\shortstack{All\\\%}" ///
+			"\shortstack{P1\\Count}"  "\shortstack{P1\\\%}" ///
+			"\shortstack{P2\\Count}"  "\shortstack{P2\\\%}" ///
+			"\shortstack{P3\\Count}"  "\shortstack{P3\\\%}" ///
+			) ///
+		collabels(none) eqlabels(none) ///
+		cells(b(fmt(%9.3gc))) ///
+		noobs ///
+		compress 
+		
+	restore
+end
+
+
+
 *NIH funding by Phase
 cap program drop nih_funding_by_lpm_and_phase
 program define nih_funding_by_lpm_and_phase

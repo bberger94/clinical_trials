@@ -255,7 +255,7 @@ foreach dir in `report_dir' `table_dir' `figure_dir' `reg_dir' {
 	!mkdir "`dir'"
 }
 
-log using "`reg_dir'/regression_output_10-20-17.log", replace
+*log using "`reg_dir'/regression_output_10-20-17.log", replace
 
 
 cap drop any_public*
@@ -277,7 +277,6 @@ duration_regs, end_dates("actual") quietly
 
 
 
-
 /*
 * ------------------------------*
 * Appendix reg table: (Table A11)
@@ -288,7 +287,7 @@ lpm_regs, lpm(r_lpm) estimator(logit) margins quietly
 
 
 
-log close
+*log close
 
 
 

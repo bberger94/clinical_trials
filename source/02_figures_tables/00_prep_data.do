@@ -141,13 +141,14 @@ foreach var of varlist `collapse_vars' biomarker_status  {
 	replace `var' = 0 if biomarker_status == .
 }
 
+/* I'll probably want to do this soon, but not today
 * If biomarker-indication pair didn't match (so no detailed role data),
 * recode missing detailed roles as 0 and not_determined_drole = 1
 replace not_determined_drole = 1 if biomarker_status == 1 & not_determined_drole == .
 foreach var of varlist *_drole {
 replace `var' = 0 if `var' == .
 }
-
+*/
 
 /****************************************
 	PROCESS FIRM DATA

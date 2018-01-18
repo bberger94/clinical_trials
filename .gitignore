@@ -1,5 +1,6 @@
 /data/
 /.old-data/
-.Rhistory
-.DS_Store
-.RData
+/.Rhistory
+/.DS_Store
+/.RData
+/reports/test_report

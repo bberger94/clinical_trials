@@ -47,14 +47,14 @@ do "source/03_regressions/reg_fns.do"
 	Run regression programs and log output
 \*----------------------------------------------------------------------------*/
 
-local report_dir "reports/report_10-20-17"
+local report_dir "reports/report_01-18-18"
 local reg_dir "`report_dir'/regs"
 
 foreach dir in `report_dir' `table_dir' `figure_dir' `reg_dir' {
 	!mkdir "`dir'"
 }
 
-*log using "`reg_dir'/regression_output_10-20-17.log", replace
+log using "`reg_dir'/regression_output_01-18-18.log", replace
 
 label variable any_public "Public firm (lower bound)"
 label variable any_public_max "Public firm (upper bound)"
@@ -71,6 +71,8 @@ lpm_regs, lpm(r_lpm) estimator(regress) quietly
 duration_regs, end_dates("actual") quietly
 
 
+log close
+
 /*
 * ------------------------------*
 * Appendix reg table: (Table A11)
@@ -78,8 +80,5 @@ duration_regs, end_dates("actual") quietly
 lpm_regs, lpm(g_lpm) estimator(logit) margins quietly
 lpm_regs, lpm(r_lpm) estimator(logit) margins quietly
 */
-
-*log close
-
 
 

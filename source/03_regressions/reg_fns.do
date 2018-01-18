@@ -14,39 +14,39 @@ program define lpm_regs
 	
 	*****All years	
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public, ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm  i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type ) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type ) post
 		}
 		estimates store reg1a
 		
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm  i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type ) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type ) post
 		}
 		estimates store reg1b	
 	
 		
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public, ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm  i.genomic_type any_public, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1c
 	
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max, ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm  i.genomic_type any_public_max, ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1d	
 	
@@ -54,38 +54,38 @@ program define lpm_regs
 	local if = "if year_start >= 2005"
 
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm  i.genomic_type any_public `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1e
 
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
+		year_start phase_2 phase_3 i.us_trial i.neoplasm  i.genomic_type any_public_max `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1f
 		
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public `if', ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm  i.genomic_type any_public `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1g
 
 	`quietly' `estimator' `lpm' ///
-		year_start phase_2 phase_3 i.us_trial##i.neoplasm i.nih_funding i.genomic_type any_public_max `if', ///
+		year_start phase_2 phase_3 i.us_trial##i.neoplasm  i.genomic_type any_public_max `if', ///
 		vce(cluster most_common_chapter)
 		if "`margins'" != "" {
 		`quietly' margins, ///
-		dydx(year_start phase_2 phase_3 us_trial neoplasm nih_funding genomic_type) post
+		dydx(year_start phase_2 phase_3 us_trial neoplasm  genomic_type) post
 		}
 		estimates store reg1h
 
@@ -119,33 +119,33 @@ program define duration_regs
 	* All trials
 	* LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public  ///
+		i.year_start phase_2 phase_3 us_trial neoplasm  any_public  ///
 		if g_lpm == 1 , robust
 		estimates store reg1a
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 us_trial neoplasm  any_public_max  ///
 		if g_lpm == 1 , robust
 		estimates store reg1b
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 neoplasm  any_public_max  ///
 		if g_lpm == 1 & us_trial == 1 , robust
 		estimates store reg1c
 
 	* NON-LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public  ///
+		i.year_start phase_2 phase_3 us_trial neoplasm  any_public  ///
 		if g_lpm == 0 , robust
 		estimates store reg1d
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial neoplasm nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 us_trial neoplasm  any_public_max  ///
 		if g_lpm == 0 , robust
 		estimates store reg1e
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 neoplasm nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 neoplasm  any_public_max  ///
 		if g_lpm == 0 & us_trial == 1 , robust
 		estimates store reg1f
 	
@@ -161,33 +161,33 @@ program define duration_regs
 	
 	* LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public  ///
+		i.year_start phase_2 phase_3 us_trial  any_public  ///
 		if g_lpm == 1 , robust
 		estimates store reg2a
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 us_trial  any_public_max  ///
 		if g_lpm == 1 , robust
 		estimates store reg2b
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max `roles' ///
+		i.year_start phase_2 phase_3 us_trial  any_public_max `roles' ///
 		if g_lpm == 1 , robust
 		estimates store reg2c
 	
 	* NON-LPM
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public  ///
+		i.year_start phase_2 phase_3 us_trial  any_public  ///
 		if g_lpm == 0 , robust
 		estimates store reg2d
 		
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max  ///
+		i.year_start phase_2 phase_3 us_trial  any_public_max  ///
 		if g_lpm == 0 , robust
 		estimates store reg2e
 				
 	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial nih_funding any_public_max `roles' ///
+		i.year_start phase_2 phase_3 us_trial  any_public_max `roles' ///
 		if g_lpm == 0 , robust
 		estimates store reg2f
 

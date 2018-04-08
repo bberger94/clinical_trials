@@ -1,7 +1,6 @@
-/data/
-/.old-data/
-/.Rhistory
-/.DS_Store
-/.RData
-/reports/test_report
-/reports/report_08*
+data/
+.old-data/
+.Rhistory
+.DS_Store
+.RData
+reports/

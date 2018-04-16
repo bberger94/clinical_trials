@@ -31,14 +31,7 @@ foreach dir in `report_dir' `table_dir' `figure_dir' {
 set scheme s1mono
 
 *Figure 3
-*3a
-trial_count_by_phase if g_lpm == 1, ///
-	title("Number of registered precision medicine trials by phase") ///
-	ylabel("ylabel(0(100)500, angle(0))") ///
-	figure_path("`figure_dir'/03a-g_lpm_count_by_phase.eps")
-
-*3b
-trial_share_by_phase, var(g_lpm) ///
+trial_share_by_phase, var(r_lpm) ///
 	title("Share of trials with precision medicine biomarkers") ///
 	ylabel("ylabel(0(1)12, angle(0))") ///
-	figure_path("`figure_dir'/03b-g_lpm_share_by_phase.eps")
+	figure_path("`figure_dir'/pm_share.eps")

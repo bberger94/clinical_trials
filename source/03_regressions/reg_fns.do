@@ -1,9 +1,8 @@
 
-
-
-
 set more off
 
+
+* LPM Regression models
 cap program drop lpm_regs
 program define lpm_regs
 	syntax, ///
@@ -102,6 +101,7 @@ end
 
 	
 ********************************************************************************
+* Trial duration regression models
 cap program drop duration_regs
 program define duration_regs
 	syntax [if], ///

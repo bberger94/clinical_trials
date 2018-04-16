@@ -73,12 +73,3 @@ duration_regs, end_dates("actual") quietly
 
 log close
 
-/*
-* ------------------------------*
-* Appendix reg table: (Table A11)
-* ------------------------------*
-lpm_regs, lpm(g_lpm) estimator(logit) margins quietly
-lpm_regs, lpm(r_lpm) estimator(logit) margins quietly
-*/
-
-

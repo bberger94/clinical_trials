@@ -170,11 +170,6 @@ program define duration_regs
 		if g_lpm == 1 , robust
 		estimates store reg2b
 				
-	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial  any_public_max `roles' ///
-		if g_lpm == 1 , robust
-		estimates store reg2c
-	
 	* NON-LPM
 	`quietly' reg duration_w ///
 		i.year_start phase_2 phase_3 us_trial  any_public  ///
@@ -186,11 +181,6 @@ program define duration_regs
 		if g_lpm == 0 , robust
 		estimates store reg2e
 				
-	`quietly' reg duration_w ///
-		i.year_start phase_2 phase_3 us_trial  any_public_max `roles' ///
-		if g_lpm == 0 , robust
-		estimates store reg2f
-
 	di "Printing Table 10b"
 	estout reg2*, cells(b(star fmt(3) ) se(par fmt(3) )) ///
 		starlevels($stars) legend label varlabels(_cons Constant) stats(N r2, fmt(0 3)) style(tex)	
